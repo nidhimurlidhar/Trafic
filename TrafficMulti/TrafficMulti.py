@@ -264,7 +264,9 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
     self.setupEditionTab()
     self.setupClassificationTab()
     self.setupTrainingTab()
-
+    out, err = subprocess.Popen(["/tools/Slicer4/Slicer-4.7.0-2017-05-19-linux-amd64/bin/python-real","/work/dprince/TRAFFIC/Traffic/TrafficLib/envTensorFlow.py"] , stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    print err
+    print out
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # #                                UI FILES LOADING                                   #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
