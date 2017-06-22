@@ -44,11 +44,13 @@ vtkSmartPointer<vtkPolyData> sampling_fibers(int nbSample, std::string inputfile
 
     int NbFibers = input->GetNumberOfCells();
     float step;
+    int nbPtOnFiber;
+    vtkIdType currentId;
     for (int i = 0; i<NbFibers; i++)
     {
 
-        int nbPtOnFiber = input->GetCell(i)->GetNumberOfPoints();
-        vtkIdType currentId = ids->GetNumberOfIds();
+        nbPtOnFiber = input->GetCell(i)->GetNumberOfPoints();
+        currentId = ids->GetNumberOfIds();
         if(nbSample > 1)
             step = (float) (nbPtOnFiber-1)/(nbSample-1);
         else

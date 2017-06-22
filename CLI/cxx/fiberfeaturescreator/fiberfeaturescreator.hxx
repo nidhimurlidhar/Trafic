@@ -505,9 +505,10 @@ void FiberFeaturesCreator::compute_landmark_feature()
 		
 	}
 
-	double * p1;
-	double * p0;
-	double * p2;
+	double * p1 = new double[3];
+	double * p0 = new double[3];
+	double tuple;
+	vtkPoints* pts;
 	for(int k=0; k<this->nbLandmarks; k++)
 	{
 		vtkSmartPointer<vtkFloatArray> dist2landmark = vtkFloatArray::New() ;
@@ -516,21 +517,18 @@ void FiberFeaturesCreator::compute_landmark_feature()
 		dist2landmark->SetName(landmarkLabel[k].c_str());
 		for(int i=0; i<NbFibers; i++)
 		{
-			double* p1 = new double[3];
-
 				p1[0] = (this->avgLandmarks->GetPoint(k))[0];
 				p1[1] = (this->avgLandmarks->GetPoint(k))[1];
 				p1[2] = (this->avgLandmarks->GetPoint(k))[2];
 
-			vtkPoints* pts = this->inputFibers->GetCell(i)->GetPoints();
+			pts = this->inputFibers->GetCell(i)->GetPoints();
 			NbPtOnFiber = pts->GetNumberOfPoints();
 			for(int j=0; j<NbPtOnFiber; j++)
 			{
-				double* p0 = new double[3];
 				p0[0] = pts->GetPoint(j)[0];
 				p0[1] = pts->GetPoint(j)[1];
 				p0[2] = pts->GetPoint(j)[2];
-				double tuple = sqrt((p0[0]-p1[0])*(p0[0]-p1[0])+(p0[1]-p1[1])*(p0[1]-p1[1])+(p0[2]-p1[2])*(p0[2]-p1[2]));
+				tuple = sqrt((p0[0]-p1[0])*(p0[0]-p1[0])+(p0[1]-p1[1])*(p0[1]-p1[1])+(p0[2]-p1[2])*(p0[2]-p1[2]));
 				dist2landmark->InsertNextTuple1(tuple);
 			}
 
