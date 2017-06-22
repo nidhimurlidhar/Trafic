@@ -11,15 +11,15 @@ NC = "\033[0m"
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
-flags.DEFINE_integer('num_epochs', 5, 'Number of epochs to run trainer.')
+flags.DEFINE_integer('num_epochs', 2, 'Number of epochs to run trainer.')
 flags.DEFINE_integer('num_hidden', 1024, 'Number of hidden layers.')
-flags.DEFINE_integer('batch_size', 5, 'Batch size.')
+flags.DEFINE_integer('batch_size', 10, 'Batch size.')
 flags.DEFINE_string('data_dir', '',
                     'Directory with the training data.')
 flags.DEFINE_string('checkpoint_dir', '',
                     """Directory where to write model checkpoints.""")
 flags.DEFINE_string('summary_dir', '',
-                    """Directory where to write model checkpoints.""")
+                    """Directory where to write summary.""")
 flags.DEFINE_boolean('multiclass', False,
                          """Whether Multiclassification or Biclassification.""")
 
@@ -92,8 +92,8 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
                 if step % 100 == 0:
                     print('Step %d: loss = %.12f (%.3f sec)' % (step, loss_value, duration))
-
                     print ""
+                    sys.stdout.flush()
 
                     # output some data to the log files for tensorboard
                     summary_str = sess.run(summary_op)
@@ -111,6 +111,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         except tf.errors.OutOfRangeError:
             print('Done training for %d epochs, %d steps.' % (num_epochs,
                                                               step))
+            sys.stdout.flush()
             checkpoint_path = os.path.join(checkpoint_dir,
                                            'model.ckpt')
             saver.save(sess, checkpoint_path, global_step=step)
@@ -127,7 +128,7 @@ def main(_):
     start = time.time()
     run_training(FLAGS.data_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.num_hidden, FLAGS.multiclass)
     end = time.time()
-    print YELLOW, "Training Process took %dh%02dm%02ds" % (convert_time(end - start)), NC
+    print "Training Process took %dh%02dm%02ds" % (convert_time(end - start))
 
 
 if __name__ == '__main__':
