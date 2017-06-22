@@ -15,8 +15,8 @@ from makeDataset import run_make_dataset
 import logging
 
 TMP_DIR = "/work/dprince/DirectoryTest/"
-TRAIN_DIR = "/work/dprince/DirectoryTrain/"
-
+TRAIN_DIR = "/work/dprince/Multiclass/Train_32_Cleaned/"
+MODEL_DIR = "/work/dprince/Trash/Models/"
 
 #
 # TrafficMulti
@@ -160,10 +160,12 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
     #                                 CLEAR AND SAVE AREA                               #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
-    self.dFPath = qt.QLineEdit("Select displacement field for the fiber")
+    self.dFPath = qt.QLineEdit("")
+    self.outputDirEdit = qt.QLineEdit("")
     # self.dFPath.setEnabled(False)
 
-    self.atalsSelector = qt.QPushButton("Browse")
+    self.dFSelector = qt.QPushButton("Browse")
+    self.outputDirEditSelector = qt.QPushButton("Browse")
     self.clearButton = qt.QPushButton("CLEAR")
     self.clearButton.toolTip = "Clear everything."
     self.clearButton.enabled = True
@@ -177,11 +179,17 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
 
     gridLayoutdF.addWidget(qt.QLabel("Displacement field"), 0, 0)
     gridLayoutdF.addWidget(self.dFPath, 0, 1)
-    gridLayoutdF.addWidget(self.atalsSelector, 0, 2)
+    gridLayoutdF.addWidget(self.dFSelector, 0, 2)
+    gridLayoutdF.addWidget(qt.QLabel("Output Directory"), 1, 0)
+    gridLayoutdF.addWidget(self.outputDirEdit, 1, 1)
+    gridLayoutdF.addWidget(self.outputDirEditSelector, 1, 2)
+
     gridLayoutClearSave.addWidget(self.clearButton, 0, 0)
     gridLayoutClearSave.addWidget(self.saveButton, 0, 2)
     self.editionLayout.addLayout(gridLayoutdF)
     self.editionLayout.addLayout(gridLayoutClearSave)
+
+
 
     self.nodeDict = {}
 
@@ -190,7 +198,7 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
       self.nodeDict[name_labels[i]] = []
 
 
-    self.layout.addStretch(1)
+    self.editionLayout.addStretch(1)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #                                 CONNECTIONS                                       #
@@ -209,40 +217,156 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
     self.clearButton.connect("clicked(bool)", self.onClearButton)
 
     self.extractFiber.connect("clicked(bool)", self.OnExtractFiber)
-    self.atalsSelector.connect("clicked(bool)", self.OndFSelector)
+    self.dFSelector.connect("clicked(bool)", self.OndFSelector)
     self.dFPath.connect("editingFinished()", self.checkdFPath)
+    self.outputDirEditSelector.connect("clicked(bool)", self.OnOutputDirEditSelector)
+    self.outputDirEdit.connect("editingFinished()", self.CheckOutputDirEdit)
+
     return
 
   def setupTrainingTab(self):
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    #                                UI FILES LOADING                                   #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    loader = qt.QUiLoader()
-    self.TrainingTabName = 'TrafficMultiTrainingTab'
-    scriptedModulesPath = eval('slicer.modules.%s.path' % self.moduleName.lower())
-    scriptedModulesPath = os.path.dirname(scriptedModulesPath)
-    path = os.path.join(scriptedModulesPath, 'Resources', 'UI', '%s.ui' % self.TrainingTabName)
-    qfile = qt.QFile(path)
-    qfile.open(qt.QFile.ReadOnly)
-    widget = loader.load(qfile, self.trainingTabWidget)
     self.trainingLayout = qt.QVBoxLayout(self.trainingTabWidget)
-    self.trainingWidget = widget
+    gridLayoutTrain = qt.QGridLayout()
+    self.lr_spinbox = qt.QDoubleSpinBox()
+    self.lr_spinbox.setSingleStep(0.001)
+    self.lr_spinbox.setValue(0.01)
+    self.lr_spinbox.setDecimals(3)
+
+    self.num_epochs_spinbox = qt.QSpinBox()
+    self.num_epochs_spinbox.setSingleStep(1)
+    self.num_epochs_spinbox.setValue(1)
+
+    gridLayoutTrain.addWidget(qt.QLabel("Learning Rate"), 0, 0)
+    gridLayoutTrain.addWidget(self.lr_spinbox, 0, 1)
+    gridLayoutTrain.addWidget(qt.QLabel("Number of Epochs"), 1, 0)
+    gridLayoutTrain.addWidget(self.num_epochs_spinbox, 1, 1)
+
+    gridLayoutSumdir = qt.QGridLayout()
+    self.sumDirTrainSelector = qt.QPushButton("Browse")
+    self.sumDirTrain = qt.QLineEdit("")
+
+    self.modelDirTrainSelector = qt.QPushButton("Browse")
+    self.modelDirTrain = qt.QLineEdit("")
+
+    self.dataDirTrainSelector = qt.QPushButton("Browse")
+    self.dataDirTrain = qt.QLineEdit("")
+
+
+
+    gridLayoutSumdir.addWidget(qt.QLabel("Data Directory"), 1, 0)
+    gridLayoutSumdir.addWidget(self.dataDirTrain, 1, 1)
+    gridLayoutSumdir.addWidget(self.dataDirTrainSelector, 1, 2)
+
+    gridLayoutSumdir.addWidget(qt.QLabel("Model Directory"), 2, 0)
+    gridLayoutSumdir.addWidget(self.modelDirTrain, 2, 1)
+    gridLayoutSumdir.addWidget(self.modelDirTrainSelector, 2, 2)
+
+    gridLayoutSumdir.addWidget(qt.QLabel("Summary Directory"), 3, 0)
+    gridLayoutSumdir.addWidget(self.sumDirTrain, 3, 1)
+    gridLayoutSumdir.addWidget(self.sumDirTrainSelector, 3, 2)
+
+    gridResTrain = qt.QGridLayout()
+    self.trainReset = qt.QPushButton("RESET")
+    self.trainTrain = qt.QPushButton("TRAIN")
+    gridResTrain.addWidget(self.trainReset, 0, 0)
+    gridResTrain.addWidget(self.trainTrain, 0, 1)
+
+    self.trainingLayout.addLayout(gridLayoutTrain)
+    self.trainingLayout.addLayout(gridLayoutSumdir)
+
+    self.trainingLayout.addLayout(gridResTrain)
+    self.trainingLayout.addStretch(1)
+
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #                                 CONNECTIONS                                       #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    self.trainReset.connect("clicked(bool)", self.OnTrainReset)
+    self.trainTrain.connect("clicked(bool)", self.OnTrainTrain)
+    self.dataDirTrainSelector.connect("clicked(bool)", self.OnDataDirTrain)
+    self.modelDirTrainSelector.connect("clicked(bool)", self.OnModelDirTrain)
+    self.sumDirTrainSelector.connect("clicked(bool)", self.OnSumDirTrain)
+    self.dataDirTrain.connect("editingFinished()", self.CheckDataDirTrain)
+    self.modelDirTrain.connect("editingFinished()", self.CheckModelDirTrain)
+    self.sumDirTrain.connect("editingFinished()", self.CheckSumDirTrain)
+
+
+    # self.trainingWidget = widget
+
     return
 
   def setupClassificationTab(self):
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    #                                UI FILES LOADING                                   #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    loader = qt.QUiLoader()
-    self.ClassificationTabName = 'TrafficMultiClassificationTab'
-    scriptedModulesPath = eval('slicer.modules.%s.path' % self.moduleName.lower())
-    scriptedModulesPath = os.path.dirname(scriptedModulesPath)
-    path = os.path.join(scriptedModulesPath, 'Resources', 'UI', '%s.ui' % self.ClassificationTabName)
-    qfile = qt.QFile(path)
-    qfile.open(qt.QFile.ReadOnly)
-    widget = loader.load(qfile, self.classificationTabWidget)
     self.classificationLayout = qt.QVBoxLayout(self.classificationTabWidget)
-    self.classificationWidget = widget
+    gridLayoutClass = qt.QGridLayout()
+    ### Input File
+    self.inputClass = qt.QLineEdit("")
+    self.inputClassSelector = qt.QPushButton("Browse")
+
+    ### Output Directory
+    self.outputDirClass = qt.QLineEdit("")
+    self.outputDirClassSelector = qt.QPushButton("Browse")
+
+
+    ### Model Directory
+    self.modelDirClass = qt.QLineEdit("")
+    self.modelDirClassSelector = qt.QPushButton("Browse")
+
+
+    ### Summary Directory
+    self.sumDirClass = qt.QLineEdit("")
+    self.sumDirClassSelector = qt.QPushButton("Browse")
+
+    ### Displacement Field
+    self.dFPathClass = qt.QLineEdit("")
+    self.dFPathClassSelector = qt.QPushButton("Browse")
+
+
+    gridLayoutClass.addWidget(qt.QLabel("Input File"), 0, 0)
+    gridLayoutClass.addWidget(self.inputClass, 0, 1)
+    gridLayoutClass.addWidget(self.inputClassSelector, 0, 2)
+    gridLayoutClass.addWidget(qt.QLabel("Output Directory"), 1, 0)
+    gridLayoutClass.addWidget(self.outputDirClass, 1, 1)
+    gridLayoutClass.addWidget(self.outputDirClassSelector, 1, 2)
+    gridLayoutClass.addWidget(qt.QLabel("Model Directory"), 2, 0)
+    gridLayoutClass.addWidget(self.modelDirClass, 2, 1)
+    gridLayoutClass.addWidget(self.modelDirClassSelector, 2, 2)
+    gridLayoutClass.addWidget(qt.QLabel("Summary Directory"), 3, 0)
+    gridLayoutClass.addWidget(self.sumDirClass, 3, 1)
+    gridLayoutClass.addWidget(self.sumDirClassSelector, 3, 2)
+    gridLayoutClass.addWidget(qt.QLabel("Displacement Field"), 4, 0)
+    gridLayoutClass.addWidget(self.dFPathClass, 4, 1)
+    gridLayoutClass.addWidget(self.dFPathClassSelector, 4, 2)
+
+    gridResClass = qt.QGridLayout()
+    self.classReset = qt.QPushButton("RESET")
+    self.classRun = qt.QPushButton("RUN")
+    gridResClass.addWidget(self.classReset, 0, 0)
+    gridResClass.addWidget(self.classRun, 0, 1)
+
+    self.classificationLayout.addLayout(gridLayoutClass)
+    self.classificationLayout.addLayout(gridResClass)
+    self.classificationLayout.addStretch(1)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #                                 CONNECTIONS                                       #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    self.classReset.connect("clicked(bool)", self.OnClassReset)
+    self.classRun.connect("clicked(bool)", self.OnClassRun)
+
+    self.inputClassSelector.connect("clicked(bool)", self.OnInputClass)
+    self.outputDirClassSelector.connect("clicked(bool)", self.OnOutputDirClass)
+    self.modelDirClassSelector.connect("clicked(bool)", self.OnModelDirClass)
+    self.sumDirClassSelector.connect("clicked(bool)", self.OnSumDirClass)
+    self.dFPathClassSelector.connect("clicked(bool)", self.OndFClassSelector)
+
+    self.inputClass.connect("editingFinished()", self.CheckInputClass)
+    self.outputDirClass.connect("editingFinished()", self.CheckOutputDirClass)
+    self.modelDirClass.connect("editingFinished()", self.CheckModelDirClass)
+    self.sumDirClass.connect("editingFinished()", self.CheckSumDirClass)
+    self.dFPathClass.connect("editingFinished()", self.CheckdFClassPath)
+
+    # self.classificationWidget = widget
     return
 
   def setup(self):
@@ -264,168 +388,6 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
     self.setupEditionTab()
     self.setupClassificationTab()
     self.setupTrainingTab()
-    out, err = subprocess.Popen(["/tools/Slicer4/Slicer-4.7.0-2017-05-19-linux-amd64/bin/python-real","/work/dprince/TRAFFIC/Traffic/TrafficLib/envTensorFlow.py"] , stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    print err
-    print out
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # #                                UI FILES LOADING                                   #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # loader = qt.QUiLoader()
-    # self.moduleName = 'TrafficMulti'
-    # scriptedModulesPath = eval('slicer.modules.%s.path' % self.moduleName.lower())
-    # scriptedModulesPath = os.path.dirname(scriptedModulesPath)
-    # path = os.path.join(scriptedModulesPath, 'Resources', 'UI', '%s.ui' % self.moduleName)
-    # qfile = qt.QFile(path)
-    # qfile.open(qt.QFile.ReadOnly)
-    # widget = loader.load(qfile, self.parent)
-    # self.layout = self.parent.layout()
-    # self.widget = widget
-
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # #                                 FIBER DISPLAY AREA                                #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # displayFibersCollapsibleButton = ctk.ctkCollapsibleButton()
-    # displayFibersCollapsibleButton.text = "Fiber Bundle"
-    # self.layout.addWidget(displayFibersCollapsibleButton)
-
-    # # Layout within the dummy collapsible button
-    # displayFibersFormLayout = qt.QFormLayout(displayFibersCollapsibleButton)
-
-    # #
-    # # Fibers Tree View
-    # #
-    # # self.inputFiber = slicer.qMRMLTractographyDisplayTreeView()
-    # self.inputFiber = slicer.qMRMLNodeComboBox()
-    # self.inputFiber.nodeTypes = ["vtkMRMLFiberBundleNode"]
-    # self.inputFiber.addEnabled = False
-    # self.inputFiber.removeEnabled = True
-    # self.inputFiber.noneEnabled = True
-    # self.inputFiber.showHidden = True
-    # self.inputFiber.showChildNodeTypes = False
-    # self.inputFiber.setMRMLScene(slicer.mrmlScene)
-    # displayFibersFormLayout.addRow("Input Fiber", self.inputFiber)
-
-    # # self.progress = qt.QProgressDialog()
-    # # self.progress.setValue(0)
-    # # self.progress.show()
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # #                                 FIBER SELECTION AREA                              #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    # selectionFibersCollapsibleButton = ctk.ctkCollapsibleButton()
-    # selectionFibersCollapsibleButton.text = "Fiber Selection"
-    # self.layout.addWidget(selectionFibersCollapsibleButton)
-
-    # # Layout within the dummy collapsible button
-    # selectionFibersFormLayout = qt.QFormLayout(selectionFibersCollapsibleButton)
-
-    # self.selectionFiber = self.getWidget('qSlicerTractographyEditorROIWidget')
-    # self.ROISelectorDisplay = self.getWidget('ROIForFiberSelectionMRMLNodeSelector')
-    # self.ROISelectorDisplay.setMRMLScene(slicer.mrmlScene)
-    # self.fiberList = self.getWidget('fiberList')
-    # name_labels = ['Select a type of fiber','0','Arc_L_FT','Arc_L_FrontoParietal','Arc_L_TemporoParietal','Arc_R_FT','Arc_R_FrontoParietal','Arc_R_TemporoParietal','CGC_L','CGC_R','CGH_L','CGH_R','CorpusCallosum_Genu',
-    #            'CorpusCallosum_Motor','CorpusCallosum_Parietal','CorpusCallosum_PreMotor','CorpusCallosum_Rostrum','CorpusCallosum_Splenium','CorpusCallosum_Tapetum','CorticoFugal-Left_Motor',
-    #            'CorticoFugal-Left_Parietal','CorticoFugal-Left_PreFrontal','CorticoFugal-Left_PreMotor','CorticoFugal-Right_Motor','CorticoFugal-Right_Parietal','CorticoFugal-Right_PreFrontal',
-    #            'CorticoFugal-Right_PreMotor','CorticoRecticular-Left','CorticoRecticular-Right','CorticoSpinal-Left','CorticoSpinal-Right','CorticoThalamic_L_PreFrontal','CorticoThalamic_L_SUPERIOR',
-    #            'CorticoThalamic_Left_Motor','CorticoThalamic_Left_Parietal','CorticoThalamic_Left_PreMotor','CorticoThalamic_R_PreFrontal','CorticoThalamic_R_SUPERIOR',
-    #            'CorticoThalamic_Right_Motor','CorticoThalamic_Right_Parietal','CorticoThalamic_Right_PreMotor','Fornix_L','Fornix_R','IFOF_L','IFOF_R','ILF_L','ILF_R',
-    #            'OpticRadiation_Left','OpticRadiation_Right','Optic_Tract_L','Optic_Tract_R','SLF_II_L','SLF_II_R','UNC_L','UNC_R']
-    # self.fiberList.addItems(name_labels)
-    # self.fiberList.setMaxVisibleItems(5)
-    # # selectionFibersFormLayout.addRow(self.selectionFiber)
-    # selectionFibersFormLayout.addRow(self.selectionFiber)
-
-    # self.disROI = self.getWidget('DisableROI')
-    # self.posROI = self.getWidget('PositiveROI')
-    # self.negROI = self.getWidget('NegativeROI')
-    # self.interROI = self.getWidget('InteractiveROI')
-    # self.showROI = self.getWidget('ROIVisibility')
-
-    # # self.accEditOn = self.getWidget('EnableAccurateEdit')
-    # self.extractFiber = self.getWidget('CreateNewFiberBundle')
-
-    # self.ROISelector = slicer.qSlicerTractographyEditorROIWidget()
-    # self.ROISelector.setFiberBundleNode(self.inputFiber.currentNode())
-    # self.ROISelector.setMRMLScene(slicer.mrmlScene)
-    # self.ROISelector.setAnnotationMRMLNodeForFiberSelection(self.ROISelectorDisplay.currentNode())
-    # self.ROISelector.setAnnotationROIMRMLNodeToFiberBundleEnvelope(self.ROISelectorDisplay.currentNode())
-
-
-    # # self.layout.addWidget(self.ROISelector)
-
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # #                                 FIBER REVIEW AREA                                 #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    # reviewsCollapsibleButton = ctk.ctkCollapsibleButton()
-    # reviewsCollapsibleButton.text = "Reviews"
-    # self.layout.addWidget(reviewsCollapsibleButton)
-
-    # self.reviewsFormLayout = qt.QFormLayout(reviewsCollapsibleButton)
-    # self.reviewsList = slicer.qMRMLTractographyDisplayTreeView()
-    # self.reviewsList.setMRMLScene(slicer.mrmlScene)
-    # self.reviewsFormLayout.addRow(self.reviewsList)
-
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # #                                 CLEAR AND SAVE AREA                               #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    
-    # self.dFPath = qt.QLineEdit("Select displacement field for the fiber")
-    # # self.dFPath.setEnabled(False)
-
-    # self.atalsSelector = qt.QPushButton("Browse")
-    # self.clearButton = qt.QPushButton("CLEAR")
-    # self.clearButton.toolTip = "Clear everything."
-    # self.clearButton.enabled = True
-    # self.saveButton = qt.QPushButton("SAVE")
-    # self.saveButton.toolTip = "Save and update Traffic database."
-    # self.saveButton.enabled = True
-
-    #     # self.layout.addWidget(self.ROISelector)
-    # gridLayoutdF = qt.QGridLayout()
-    # gridLayoutClearSave = qt.QGridLayout()
-
-    # gridLayoutdF.addWidget(qt.QLabel("Displacement field"), 0, 0)
-    # gridLayoutdF.addWidget(self.dFPath, 0, 1)
-    # gridLayoutdF.addWidget(self.atalsSelector, 0, 2)
-    # gridLayoutClearSave.addWidget(self.clearButton, 0, 0)
-    # gridLayoutClearSave.addWidget(self.saveButton, 0, 2)
-    # self.layout.addLayout(gridLayoutdF)
-    # self.layout.addLayout(gridLayoutClearSave)
-
-    # self.nodeDict = {}
-
-    # # Initialization of the dictionnary that will contains the Node ID and their type
-    # for i in xrange(1, len(name_labels)):
-    #   self.nodeDict[name_labels[i]] = []
-
-
-    # # self.layout.addStretch(1)
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # #                                 CONNECTIONS                                       #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # self.inputFiber.connect("currentNodeChanged(vtkMRMLNode*)", self.onChangeCurrentNode)
-    # self.disROI.connect("toggled(bool)", self.onDisROI)
-    # self.posROI.connect("toggled(bool)", self.onPosROI)
-    # self.negROI.connect("toggled(bool)", self.onNegROI)
-    # self.interROI.connect("toggled(bool)", self.onInterROI)
-    # self.showROI.connect("toggled(bool)", self.onShowROI)
-    # # self.accEditOn.connect("toggled(bool)", self.onAccEditOn)
-
-    # self.ROISelectorDisplay.connect("currentNodeChanged(vtkMRMLNode*)", self.onChangeCurrentNode)
-    # self.ROISelectorDisplay.connect("nodeAddedByUser(vtkMRMLNode*)", self.onAddNode)
-    # self.saveButton.connect("clicked(bool)", self.onSaveButton)
-    # self.clearButton.connect("clicked(bool)", self.onClearButton)
-
-    # self.extractFiber.connect("clicked(bool)", self.OnExtractFiber)
-    # self.atalsSelector.connect("clicked(bool)", self.OndFSelector)
-    # self.dFPath.connect("editingFinished()", self.checkdFPath)
-
 
   def getWidget(self, objectName, index_tab=0):
     if index_tab == 0:
@@ -467,6 +429,12 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
   def onShowROI(self):
       self.ROISelectorDisplay.currentNode().SetDisplayVisibility(self.showROI.isChecked())
 
+  def OnOutputDirEditSelector(self):
+    self.OnBrowseDirectory(self.outputDirEdit)
+
+  def CheckOutputDirEdit(self):
+    return self.CheckBrowseDirectory(self.outputDirEdit, "Edition Output Directory")
+
   def OndFSelector(self):
     fileDialog = qt.QFileDialog()
     fileDialog.setFileMode(qt.QFileDialog.ExistingFile)
@@ -475,17 +443,133 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
       text = fileDialog.selectedFiles()
       self.dFPath.setText(text[0])
 
-  def checkdFPath(self):
-    if self.dFPath.text.rfind(".nrrd") == -1:
+  def OndFClassSelector(self):
+    fileDialog = qt.QFileDialog()
+    fileDialog.setFileMode(qt.QFileDialog.ExistingFile)
+    fileDialog.setNameFilter("displacement field (*.nrrd)")
+    if fileDialog.exec_():
+      text = fileDialog.selectedFiles()
+      self.dFPathClass.setText(text[0])
+
+  def CheckdFClassPath(self):
+    if self.dFPathClass.text == "":
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("Please choose a displacement field filename")
+      msg.exec_()
+    elif not os.path.isfile(self.dFPathClass.text):
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("File doesn't exist. Please correct the displacement field filename")
+      msg.exec_()
+      return False
+    elif self.dFPathClass.text.rfind(".nrrd") == -1:
       msg = qt.QMessageBox()
       msg.setIcon(3)
       msg.setText("Invalid File Format. Must be a .nrrd file. Please correct the displacement field filename")
       msg.exec_()
       return False
-    if not os.path.isfile(self.dFPath.text):
+
+    return True
+
+  def checkdFPath(self):
+    if self.dFPath.text == "":
       msg = qt.QMessageBox()
       msg.setIcon(3)
-      msg.setText("Invalid File Format. File doesn't exist. Please correct the displacement field filename")
+      msg.setText("Please choose a displacement field filename")
+      msg.exec_()
+    elif not os.path.isfile(self.dFPath.text):
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("File doesn't exist. Please correct the displacement field filename")
+      msg.exec_()
+      return False
+    elif self.dFPath.text.rfind(".nrrd") == -1:
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("Invalid File Format. Must be a .nrrd file. Please correct the displacement field filename")
+      msg.exec_()
+      return False
+    return True
+
+  def OnInputClass(self):
+    fileDialog = qt.QFileDialog()
+    fileDialog.setFileMode(qt.QFileDialog.ExistingFile)
+    fileDialog.setNameFilter("input file (*.vtk *.vtp)")
+    if fileDialog.exec_():
+      text = fileDialog.selectedFiles()
+      self.inputClass.setText(text[0])
+
+  def CheckInputClass(self):
+    if not os.path.isfile(self.inputClass.text):
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("File doesn't exist. Please correct the input file")
+      msg.exec_()
+      return False
+    elif self.inputClass.text.rfind(".vtk") == -1 and self.inputClass.text.rfind(".vtp") == -1:
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("Invalid File Format. Must be a .vtk or .vtp file. Please correct the input file")
+      msg.exec_()
+      return False
+    return True
+
+
+  def OnDataDirTrain(self):
+    self.OnBrowseDirectory(self.dataDirTrain)
+
+  def OnModelDirTrain(self):
+    self.OnBrowseDirectory(self.modelDirTrain)
+
+  def OnSumDirTrain(self):
+    self.OnBrowseDirectory(self.sumDirTrain)
+
+  def CheckDataDirTrain(self):
+    return self.CheckBrowseDirectory(self.dataDirTrain, "Data Directory")
+
+  def CheckModelDirTrain(self):
+    return self.CheckBrowseDirectory(self.modelDirTrain, "Model Directory")
+
+  def CheckSumDirTrain(self):
+    return self.CheckBrowseDirectory(self.sumDirTrain, "Summary Directory")
+
+  def OnOutputDirClass(self):
+    self.OnBrowseDirectory(self.outputDirClass)
+
+  def OnModelDirClass(self):
+    self.OnBrowseDirectory(self.modelDirClass)
+
+  def OnSumDirClass(self):
+    self.OnBrowseDirectory(self.sumDirClass)
+
+  def CheckOutputDirClass(self):
+    return self.CheckBrowseDirectory(self.outputDirClass, "Classification Output Directory")
+
+  def CheckModelDirClass(self):
+    return self.CheckBrowseDirectory(self.modelDirClass, "Model Directory")
+
+  def CheckSumDirClass(self):
+    return self.CheckBrowseDirectory(self.sumDirClass, "Summary Directory")
+
+  def OnBrowseDirectory(self, dir):
+    fileDialog = qt.QFileDialog()
+    fileDialog.setFileMode(qt.QFileDialog.DirectoryOnly)
+    if fileDialog.exec_():
+      text = fileDialog.selectedFiles()
+      dir.setText(text[0])
+
+  def CheckBrowseDirectory(self, dir, name):
+    if dir.text=="":
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("Please choose "+ str(name) + "")
+      msg.exec_()
+      return False
+    elif not os.path.isdir(dir.text):
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("Unknown or non valid directory. Please correct the "+ str(name))
       msg.exec_()
       return False
     return True
@@ -513,27 +597,48 @@ class TrafficMultiWidget(ScriptedLoadableModuleWidget):
   def onSaveButton(self):
 
     #TO DO: Save all Data and Clear after + Add a message box to confirm the save + Message to choose the dF
-    if self.checkdFPath():
-      warning_msg = qt.QMessageBox()
-      warning_msg.setIcon(2)
-      warning_msg.setText("Your selection will directly be add to the\n"
-                          "training database of the Traffic tool and will\n" 
-                          "have an impact on the resulting training model.\n"
-                          "Are you sure this is what you want?")
-      warning_msg.setStandardButtons(qt.QMessageBox.Save | qt.QMessageBox.Cancel)
-      choice = warning_msg.exec_()
-      if(choice == qt.QMessageBox.Save):
-        logic = TrafficMultiLogic()
-        logic.runSaveFiber(self.nodeDict, TMP_DIR)
-        self.removeNodeExtracted()
-        # Initialization of the dictionnary
-        for key in self.nodeDict.keys():
-          self.nodeDict[key] = []
+    if self.checkdFPath() and self.CheckOutputDirEdit():
+      currentPath = os.path.dirname(os.path.abspath(__file__))
+      tmp_dir = os.path.join(self.outputDirEdit.text, 'tmp_dir_save')
+      final_dir = os.path.join(self.outputDirEdit.text, 'Multiclass')
+      logic = TrafficMultiLogic()
+      logic.runSaveFiber(self.nodeDict, tmp_dir)
+      self.removeNodeExtracted()
+      # Initialization of the dictionnary
+      for key in self.nodeDict.keys():
+        self.nodeDict[key] = []
 
-        logic.runPreProcess(self.dFPath.displayText, TMP_DIR)
+      logic.runPreProcess(self.dFPath.displayText, tmp_dir, final_dir)
+      rmtree(tmp_dir)
         # logic.runStore()
 
+  def OnTrainReset(self):
+    self.num_epochs_spinbox.setValue(1)
+    self.lr_spinbox.setValue(0.01)
+    self.sumDirTrain.text = "/tmp"
+    self.modelDirTrain.text = ""
+    self.dataDirTrain.text = ""
 
+  def OnClassReset(self):
+    self.sumDirClass.text = "/tmp"
+    self.modelDirClass.text = ""
+    self.outputDirClass.text = ""
+    self.inputClass.text = ""
+
+  def OnClassRun(self):
+    print "IN"
+    if self.CheckInputClass() and self.CheckOutputDirClass() and self.CheckModelDirClass() and self.CheckSumDirClass() and self.CheckdFClassPath():
+      print "IN IN IN"
+      logic = TrafficMultiLogic()
+      logic.runClassification(self.inputClass.text, self.modelDirClass.text, self.sumDirClass.text, self.outputDirClass.text, self.dFPathClass.text)
+    print "TOO BAD"
+    return
+
+  def OnTrainTrain(self):
+    if self.CheckDataDirTrain() and self.CheckModelDirTrain() and self.CheckSumDirTrain():
+        logic = TrafficMultiLogic()
+        logic.runStoreAndTrain( self.dataDirTrain.text, self.modelDirTrain.text, self.lr_spinbox.value, self.num_epochs_spinbox.value, self.sumDirTrain.text )
+    return
   def onClearButton(self):
 
     while(self.inputFiber.currentNode() != None):
@@ -631,29 +736,20 @@ class TrafficMultiLogic(ScriptedLoadableModuleLogic):
         slicer.util.saveNode(node, filename)
     logging.info('Fibers saved')
 
-  def runPreProcess(self, dF_path, input_dir):
+  def runPreProcess(self, dF_path, input_dir, output_dir):
 
       #TO CHANGE: LOCATION OF CLI AND VARIABLES
-      polydatatransform = "/work/dprince/TRAFIC/src/cxx/polydatatransform/bin/bin/polydatatransform"
-      dti_reg = "/tools/bin_linux64/DTI-Reg"
-      dti_ped = "/work/dprince/Data/TrainingData/Ped_1y_2y/PediatricAtlas_071714FinalAtlasDTI.nrrd"
+      #
+      cli_dir = os.path.join(currentPath, "..","CLI")
+      polydatatransform = os.path.join(cli_dir, "cxx","polydatatransform","bin","bin","polydatatransform")
       lm_ped = "/work/dprince/Multiclass/Landmarks/landmarks_32pts_afprop.fcsv"
-      tmp_dir = "/work/dprince/tmp_dir"
+      tmp_dir = os.path.join(currentPath, "tmp_dir_lm_preprocess")
 
       logging.info('Preprocessing started')
-      dF_path = os.path.join(tmp_dir, "displacementField.nrrd")
-      new_lm_path = os.path.join(tmp_dir, "landmarks_fibers_extracted.fcsv")
+      new_lm_path = os.path.join(tmp_dir, "lm_prepocess.fcsv")
       if not os.path.isdir(tmp_dir):
         os.makedirs(tmp_dir)
 
-      # Registration between target and source atlases
-      # cmd_dti_reg = [dti_reg, "--outputFolder", tmp_dir, "--fixedVolume", dti_fix, "--movingVolume", dti_ped, "--outputDisplacementField", dF_path, "--ResampleDTIPath", 
-      # "/tools/bin_linux64/ResampleDTIlogEuclidean", "--ITKTransformToolsPath", "/tools/bin_linux64/ITKTransformTools"]
-      # out, err = subprocess.Popen(cmd_dti_reg, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-      # # print("\nout : " + str(out))
-      # if err != "":
-      #   print("\nerr : " + str(err))
-      # Propagation of landmarks to the target space
       logging.info('Polydata transform')
       cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_path, "-o", new_lm_path]
       out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
@@ -661,45 +757,67 @@ class TrafficMultiLogic(ScriptedLoadableModuleLogic):
       if err != "":
         print("\nerr : " + str(err))
       logging.info('Make Dataset')
-      run_make_dataset(input_dir, TRAIN_DIR, new_lm_path, landmarksOn=True)
-      # p_pdt = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      # out, err = p_pdt.communicate()
-      # print("\nout : " + str(out) + "\nerr : " + str(err))
-
-      # p= subprocess.Popen(cmd_test, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      # out, err = p.communicate()
-      # print("\nout : " + str(out) + "\nerr : " + str(err))
-      # run_preprocess(TMP_DIR, TRAIN_DIR, str(dti_fix), landmarksOn=True, curvatureOn=True, torsionOn=True)
-      # check_call(cmd_polydatatransform)
+      run_make_dataset(input_dir, output_dir, new_lm_path, landmarksOn=True)
+      rmtree(tmp_dir)
       logging.info('Preprocessing completed')
 
       return
 
-  def runStore(self):
-
+  def runStoreAndTrain(self, data_dir, model_dir, lr, num_epochs, sum_dir):
+    currentPath = os.path.dirname(os.path.abspath(__file__))
+    env_dir = os.path.join(currentPath, "..", "miniconda2")
+    pipeline_train_py = os.path.join(TRAFFIC_LIB_DIR, "PipelineTrain.py")
+    cmd_py = str(pipeline_train_py) + ' --data_dir ' + str(data_dir) + ' --multiclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --lr ' + str(lr) + ' --num_epochs ' + str(num_epochs)
+    cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
+    cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env-tensorflow/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
+    # cmd_virtenv = cmd_virtenv + 'export PYTHONHOME=$ENV_DIR/bin/:$PYTHONHOME;'
+    cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
+    cmd_virtenv = cmd_virtenv + 'source activate env-tensorflow;'
+    cmd_virtenv = cmd_virtenv + 'TEST_PY="/work/dprince/TRAFFIC/Traffic/TrafficMulti/Testing/test_TF.py";'
+    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu $ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+    cmd_pipeline_train = cmd_virtenv + str(cmd_py) + ';'
+    print(cmd_pipeline_train)
+    cmd = ["bash", "-c", str(cmd_pipeline_train)]
+    out = open(os.path.join(TRAFFIC_LIB_DIR,"Logs","training_out.txt"), "wb")
+    err = open(os.path.join(TRAFFIC_LIB_DIR,"Logs","training_err.txt"), "wb")
+    subprocess.Popen(cmd, stdout=out, stderr=err)
+    # print("\nout : " + str(out) + "\nerr : " + str(err))
     return
-    # selector.createNewBundleFromSelection()
-    # selector.negativeROISelection()
 
+  def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path):
 
+    currentPath = os.path.dirname(os.path.abspath(__file__))
+    env_dir = os.path.join(currentPath, "..", "miniconda2")
+    cli_dir = os.path.join(currentPath, "..","CLI")
+    polydatatransform = os.path.join(cli_dir, "cxx","polydatatransform","bin","bin","polydatatransform")
+    lm_ped = "/work/dprince/Multiclass/Landmarks/landmarks_32pts_afprop.fcsv"
+    tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
+    if not os.path.isdir(tmp_dir):
+      os.makedirs(tmp_dir)
+    new_lm_path = os.path.join(tmp_dir, "lm_class.fcsv")
 
+    cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_Path, "-o", new_lm_path]
+    out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    print("\nout : " + str(out))
 
+    pipeline_eval_py = os.path.join(TRAFFIC_LIB_DIR, "PipelineEval.py")
+    cmd_py = str(pipeline_eval_py) + ' --data_file ' + str(data_file) + ' --multiclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --output_dir ' + str(output_dir) + ' --landmark_file ' + str(new_lm_path)
+    cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
+    cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env-tensorflow/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
+    cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
+    cmd_virtenv = cmd_virtenv + 'source activate env-tensorflow;'
+    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu $ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+    cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
+    print(cmd_pipeline_class)
+    cmd = ["bash", "-c", str(cmd_pipeline_class)]
+    out = open(os.path.join(TRAFFIC_LIB_DIR,"Logs","classification_out.txt"), "wb")
+    err = open(os.path.join(TRAFFIC_LIB_DIR,"Logs","classification_err.txt"), "wb")
+    _, _ = subprocess.Popen(cmd, stdout=out, stderr=err).communicate()
+    # print("\nout : " + str(out) + "\nerr : " + str(err))
+    # rmtree(tmp_dir)
 
-
-
-    # if not self.isValidInputOutputData(inputVolume, outputVolume):
-    #   slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
-    #   return False
-
- 
-
-    # # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    # cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
-    # cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
-
-    # # Capture screenshot
-    # if enableScreenshots:
-    #   self.takeScreenshot('TrafficMultiTest-Start','MyScreenshot',-1)
+    # print("\nout : " + str(out) + "\nerr : " + str(err))
+    return
 
     # logging.info('Processing completed')
 
