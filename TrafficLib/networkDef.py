@@ -80,7 +80,7 @@ def loss(logits, labels):
     # output:   loss        - loss tensor of type float.
     # logits = tf.cast(logits, tf.float32)
     loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(logits, labels))
+        tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
         # tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=0.8, name=None))
 
     tf.summary.scalar('loss', loss)
