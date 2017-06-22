@@ -92,7 +92,7 @@ def display_loading(index, complete, old_process):
 
 # Read a .vtk or a .vtp file and return a Polydata
 def read_vtk_data(fiber_filename):
-    print "---Reading file ", GREEN, fiber_filename, NC
+    print "---Reading file ", fiber_filename
     try:
         if not os.path.isfile(fiber_filename):
             raise Exception('%s is not a file' % fiber_filename)
@@ -100,12 +100,18 @@ def read_vtk_data(fiber_filename):
             reader = vtk.vtkPolyDataReader()
             reader.SetFileName(fiber_filename)
             reader.Update()
-            return reader.GetOutput()
+            output = reader.GetOutput()
+            del reader
+            sys.stdout.flush()
+            return output
         elif fiber_filename.rfind(".vtp") != -1:
             reader = vtk.vtkXMLPolyDataReader()
             reader.SetFileName(fiber_filename)
             reader.Update()
-            return reader.GetOutput()
+            output = reader.GetOutput()
+            del reader
+            sys.stdout.flush()
+            return output
         else:
             raise Exception('Unkmown File Format for %s' % fiber_filename)
     except IOError as e:
@@ -116,16 +122,17 @@ def read_vtk_data(fiber_filename):
 # Write a .vtk or a .vtp file and taking a Polydata in parameter
 def write_vtk_data(vtk_file, fiber_filename):
     print "---Writing file ", GREEN, fiber_filename, NC
+    sys.stdout.flush()
     try:
         if fiber_filename.rfind(".vtk") != -1:
             writer = vtk.vtkPolyDataWriter()
             writer.SetFileName(fiber_filename)
-            writer.SetInput(vtk_file)
+            writer.SetInputData(vtk_file)
             writer.Update()
         elif fiber_filename.rfind(".vtp") != -1:
             writer = vtk.vtkXMLPolyDataWriter()
             writer.SetFileName(fiber_filename)
-            writer.SetInput(vtk_file)
+            writer.SetInputData(vtk_file)
             writer.Update()
         else:
             raise Exception('Unknown File Format for %s' % fiber_filename)
@@ -146,9 +153,9 @@ def extract_fiber(bundle, ids):
 
     selectionNode.SetSelectionList(ids)
     selection.AddNode(selectionNode)
-    extractSelection.SetInput(0, bundle)
-    extractSelection.SetInput(1, selection)
+    extractSelection.SetInputData(0, bundle)
+    extractSelection.SetInputData(1, selection)
     extractSelection.Update()
-    vtu2vtkFilter.SetInput(extractSelection.GetOutput())
+    vtu2vtkFilter.SetInputData(extractSelection.GetOutput())
     vtu2vtkFilter.Update()
     return vtu2vtkFilter.GetOutput()
