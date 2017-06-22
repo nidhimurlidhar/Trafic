@@ -7,34 +7,36 @@ from os import sys, path
 from fiberfileIO import *
 if not hasattr(sys, 'argv'):
     sys.argv  = ['']
+
+    
 parser = argparse.ArgumentParser()
-parser.add_argument('-input_folder', action='store', dest='input_folder', help='Input directory ',
+parser.add_argument('--input_folder', action='store', dest='input_folder', help='Input directory ',
                     default="")
-parser.add_argument('-output_folder', action='store', dest='output_folder', help='Output Directory ',
+parser.add_argument('--output_folder', action='store', dest='output_folder', help='Output Directory ',
                     default="")
-parser.add_argument('-landmark_file', action='store', dest='landmark_file', help='Landmarks File (.vt[k/p], or .fcsv)',
+parser.add_argument('--landmark_file', action='store', dest='landmark_file', help='Landmarks File (.vt[k/p], or .fcsv)',
                     default="")
-parser.add_argument('-num_points', action='store', dest='num_points', help='Number of points for the sampling',
+parser.add_argument('--num_points', action='store', dest='num_points', help='Number of points for the sampling',
                     default=50)
-parser.add_argument('-model_fiber', action='store', dest='model_fiber', help='Model Fiber',
+parser.add_argument('--model_fiber', action='store', dest='model_fiber', help='Model Fiber',
                     default="")
-parser.add_argument('-num_landmarks', action='store', dest='num_landmarks', help='Number of landmarks',
+parser.add_argument('--num_landmarks', action='store', dest='num_landmarks', help='Number of landmarks',
                     default=5)
 
 # parser.add_argument('-root', action='store', dest='root', help='root',
 #                     default="/work/dprince/")
-parser.add_argument('-landmarks', action='store_true', dest='landmarksOn', help='Compute landmarks features ',
-                    default=False)
-parser.add_argument('-curvature', action='store_true', dest='curvatureOn', help='Compute curvature features ',
-                    default=False)
-parser.add_argument('-torsion', action='store_true', dest='torsionOn', help='Compute torsion features ',
-                    default=False)
+parser.add_argument('--landmarks', action='store_true', dest='landmarksOn', help='Compute landmarks features ',
+                    default=True)
+parser.add_argument('--curvature', action='store_true', dest='curvatureOn', help='Compute curvature features ',
+                    default=True)
+parser.add_argument('--torsion', action='store_true', dest='torsionOn', help='Compute torsion features ',
+                    default=True)
 
 
 
 
 def run_make_dataset(input_folder, output_folder, landmark_file="", num_landmarks=5, num_points=50, model_fiber=""
-, landmarksOn=False, curvatureOn=False, torsionOn=False):
+, landmarksOn=True, curvatureOn=True, torsionOn=True):
 
     sys.stdout.flush()
     class_list = os.listdir(check_folder(input_folder, True))
@@ -47,39 +49,36 @@ def run_make_dataset(input_folder, output_folder, landmark_file="", num_landmark
             input_fiber = os.path.join(class_path, fiber)
             output_fiber = os.path.join(check_folder(output_folder,True), class_fib)
             output_fiber = os.path.join(output_fiber, fiber)
-            # #output_fiber = check_file(output_fiber)
-            # make_fiber_features_py = check_file_root("TRAFIC/src/py/PreProcess/make_fiber_features.py", root)
-            # cmd = ["python", make_fiber_features_py, "-input", input_fiber,
-            #        "-output", output_fiber, "-num_points", str(num_points), "-num_landmarks",
-            #        str(num_landmarks), "-root", root, "-landmark_file", landmark_file, "-model_fiber", model_fiber]
+            make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=num_points, num_landmarks=num_landmarks, model_fiber=model_fiber, lmOn=landmarksOn,torsOn=torsionOn,curvOn=curvatureOn)
 
-            # if landmarksOn:
-            #     cmd.append("-landmarks")
-            # if torsionOn:
-            #     cmd.append("-torsion")
-            # if curvatureOn:
-            #     cmd.append("-curvature")
-            make_fiber_feature(input_fiber, output_fiber, num_points, landmark_file, num_landmarks, model_fiber, lmOn=landmarksOn,torsOn=torsionOn,curvOn=curvatureOn)
+def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, num_landmarks=5, model_fiber="", lmOn=True, torsOn=True, curvOn=True, classification=False):
+    currentPath = os.path.dirname(os.path.abspath(__file__))
+    CLI_DIR = os.path.join(currentPath, "..","CLI")
 
-            # out, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-            # print("\nout : " + str(out))
-            # print("\nerr : " + str(err))
-# print RED, "---Removing Folder",intermediate_folder, NC
-# shutil.rmtree(intermediate_folder)
-
-def make_fiber_feature(input_fiber, output_fiber, num_points,landmark_file, num_landmarks=0, model_fiber="", lmOn=False, torsOn=False, curvOn=False):
-    fibersampling = "/work/dprince/TRAFIC/src/cxx/fibersampling/bin/bin/fibersampling"
-    fiberfeaturescreator = "/work/dprince/TRAFIC/src/cxx/fiberfeaturescreator/bin/bin/fiberfeaturescreator"
-    cmd_sampling = [fibersampling,"--input", check_file(input_fiber), "--output",
+    env_dir = os.path.join(currentPath, "..", "miniconda2")
+    prefix_cli = os.path.join(env_dir,"envs","env-tensorflow","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
+    fibersampling = os.path.join(CLI_DIR, "cxx","fibersampling","bin","bin","fibersampling")
+    fiberfeaturescreator = os.path.join(CLI_DIR,"cxx","fiberfeaturescreator","bin","bin","fiberfeaturescreator")
+    if classification:
+        cmd_sampling = [prefix_cli, fibersampling,"--input", check_file(input_fiber), "--output",
+                 check_path(output_fiber, True), "-N", str(num_points)]
+    else:
+        cmd_sampling = [fibersampling,"--input", check_file(input_fiber), "--output",
                  check_path(output_fiber, True), "-N", str(num_points)]
 
+    print cmd_sampling
     out, err = subprocess.Popen(cmd_sampling, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    # print("\nout : " + str(out))
+    print("\nout : " + str(out))
     if err != "":
         print("\nerr : " + str(err))
 
-    cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
-                     check_file(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file,
+    if classification:
+        cmd_ffc = [prefix_cli, fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
+                     check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file,
+                     "--model", model_fiber]
+    else:
+        cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
+                     check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file,
                      "--model", model_fiber]
     if lmOn:
         cmd_ffc.append("--landmarks")
@@ -87,9 +86,10 @@ def make_fiber_feature(input_fiber, output_fiber, num_points,landmark_file, num_
         cmd_ffc.append("--torsion")
     if curvOn:
         cmd_ffc.append("--curvature")
-
+    print cmd_ffc
     out, err = subprocess.Popen(cmd_ffc, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    # print("\nout : " + str(out))
+    print("\nout : " + str(out))
+    
     if err != "":
         print("\nerr : " + str(err))
     return
@@ -111,9 +111,8 @@ def main():
     # Avec root
     # run_make_dataset(input_folder, output_folder, landmark_file, root, num_landmarks, num_points, model_fiber, landmarksOn, 
     #     curvatureOn, torsionOn)
-
-    run_make_dataset(input_folder, output_folder, landmark_file, num_landmarks, num_points, model_fiber, landmarksOn, 
-        curvatureOn, torsionOn)
+    run_make_dataset(input_folder, output_folder, landmark_file,  num_points=num_points, num_landmarks=num_landmarks, model_fiber=model_fiber, landmarksOn=landmarksOn, 
+        curvatureOn=curvatureOn, torsionOn=torsionOn)
 
 
 
