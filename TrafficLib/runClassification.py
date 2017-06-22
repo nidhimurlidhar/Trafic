@@ -20,8 +20,6 @@ flags.DEFINE_string('summary_dir', '/root/work/SaveTest/',
                     """Directory where to write model checkpoints.""")
 flags.DEFINE_boolean('conv', False,
                          """Whether use conv version or no Conv.""")
-flags.DEFINE_float('threshold', 0.5,
-                         """""")
 flags.DEFINE_boolean('multiclass', False,
                          """Whether Multiclassification or Biclassification.""")
 flags.DEFINE_string('fiber_name', "Fiber",
@@ -77,7 +75,7 @@ def classification(dict, output_dir, num_classes, multiclass, fiber_name):
     # output: No output but at the end of this function, we write the positives fibers in one vtk file for each class
     #         Except the class 0
 
-
+    # bundle_fiber = vtk.vtkPolyData()
     # Create the output directory if necessary
     if not os.path.exists(os.path.dirname(output_dir)):
         os.makedirs(output_dir)
@@ -87,10 +85,9 @@ def classification(dict, output_dir, num_classes, multiclass, fiber_name):
         append_list[i] = vtk.vtkAppendPolyData()
 
     for fiber in dict.keys():
-        bundle_fiber = vtk.vtkPolyData()
         bundle_fiber = read_vtk_data(fiber)
         for num_class in range(num_classes):
-            append_list[num_class].AddInput(extract_fiber(bundle_fiber, dict[fiber][num_class]))
+            append_list[num_class].AddInputData(extract_fiber(bundle_fiber, dict[fiber][num_class]))
 
     for num_class in range(1, num_classes):
         append_list[num_class].Update()
@@ -102,17 +99,15 @@ def classification(dict, output_dir, num_classes, multiclass, fiber_name):
 
     # run_classification(num_hidden, data_dir, output_dir, checkpoint_dir, summary_dir, conv, multiclass)
 
-def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hidden,  fiber_name="Fiber", conv=False, multiclass=False):
+def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hidden=1024,  fiber_name="Fiber", conv=False, multiclass=False):
     # Run evaluation on the input data set
     if multiclass:
       num_classes = 54
     else:
       num_classes = 2
     start = time.time()
+
     with tf.Graph().as_default() as g:
-
-
-
         # Build a Graph that computes the logits predictions from the
         # inference model.  We'll use a prior graph built by the training
 
@@ -120,13 +115,10 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
         if not conv:
             fibers, labels = nn.inputs(data_dir, 'test', batch_size=1, num_epochs=1, conv=False)
             logits = nn.inference(fibers, num_hidden, num_classes, is_training=False)
-
-
         # Conv Version
         else:
             fibers, labels = nn.inputs(data_dir, 'test', batch_size=1,
                                       num_epochs=1, conv=True)
-
             logits = nn.inference_conv(fibers, 2, 34, 50, num_hidden, num_classes, is_training=False)
 
         logits = tf.nn.softmax(logits)
