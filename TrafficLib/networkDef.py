@@ -397,10 +397,6 @@ def evaluation (logits, labels, batch_size):
     # print_tensor_shape(acc, "acc")
     return acc
 
-
-
-
-
 def print_tensor_shape(tensor, string):
 # input: tensor and string to describe it
     if __debug__:
