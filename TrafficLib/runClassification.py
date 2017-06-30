@@ -23,7 +23,7 @@ flags.DEFINE_boolean('conv', False,
 flags.DEFINE_boolean('multiclass', False,
                          """Whether Multiclassification or Biclassification.""")
 flags.DEFINE_string('fiber_name', "Fiber",
-                         """In biclassification permit to know the name of the fiber to extract (By default: Fiber_extracted.vtk)""")
+                         """In biclassification permit to know the name of the fiber to extract (By default: fiber_name = 'Fiber' which gives Fiber_extracted.vtk)""")
 
 
 name_labels = [ '0', 'Arc_L_FT', 'Arc_L_FrontoParietal', 'Arc_L_TemporoParietal',  'Arc_R_FT', 'Arc_R_FrontoParietal', 'Arc_R_TemporoParietal',  'CGC_L',  'CGC_R',
@@ -75,24 +75,26 @@ def classification(dict, output_dir, num_classes, multiclass, fiber_name):
     # output: No output but at the end of this function, we write the positives fibers in one vtk file for each class
     #         Except the class 0
 
-    # bundle_fiber = vtk.vtkPolyData()
+
     # Create the output directory if necessary
     if not os.path.exists(os.path.dirname(output_dir)):
         os.makedirs(output_dir)
-
     append_list = np.ndarray(shape=num_classes, dtype=np.object)
-    for i in range(num_classes):
+    for i in xrange(num_classes-1):
         append_list[i] = vtk.vtkAppendPolyData()
 
+    bundle_fiber = vtk.vtkPolyData()
     for fiber in dict.keys():
         bundle_fiber = read_vtk_data(fiber)
-        for num_class in range(num_classes):
-            append_list[num_class].AddInputData(extract_fiber(bundle_fiber, dict[fiber][num_class]))
-
-    for num_class in range(1, num_classes):
+        for num_class in xrange(num_classes-1):
+            if vtk.VTK_MAJOR_VERSION > 5:
+                append_list[num_class].AddInputData(extract_fiber(bundle_fiber, dict[fiber][num_class+1]))
+            else:
+                append_list[num_class].AddInput(extract_fiber(bundle_fiber, dict[fiber][num_class+1]))
+    for num_class in xrange(num_classes-1):
         append_list[num_class].Update()
         if multiclass:
-          write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class]+'_extracted.vtk')
+          write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class+1]+'_extracted.vtk')
         else:
           write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+fiber_name+'_extracted.vtk')
         print ""
@@ -106,8 +108,8 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
     else:
       num_classes = 2
     start = time.time()
-
     with tf.Graph().as_default() as g:
+
         # Build a Graph that computes the logits predictions from the
         # inference model.  We'll use a prior graph built by the training
 
@@ -115,10 +117,13 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
         if not conv:
             fibers, labels = nn.inputs(data_dir, 'test', batch_size=1, num_epochs=1, conv=False)
             logits = nn.inference(fibers, num_hidden, num_classes, is_training=False)
+
+
         # Conv Version
         else:
             fibers, labels = nn.inputs(data_dir, 'test', batch_size=1,
                                       num_epochs=1, conv=True)
+
             logits = nn.inference_conv(fibers, 2, 34, 50, num_hidden, num_classes, is_training=False)
 
         logits = tf.nn.softmax(logits)
@@ -165,10 +170,11 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
 
                     pred_lab = pred[0][0]
                     pred_val = val[0][0]
-                    if multiclass and pred_val >= threshold_labels[pred_lab]:
-                      prediction[pred_lab].append(name[0])
-                    elif not multiclass:
-                      prediction[pred_lab].append(name[0])
+                    prediction[pred_lab].append(name[0])
+                    # if multiclass and pred_val >= threshold_labels[pred_lab]:
+                    #   prediction[pred_lab].append(name[0])
+                    # elif not multiclass:
+                    #   prediction[pred_lab].append(name[0])
 
                     step += 1
             except tf.errors.OutOfRangeError:
@@ -185,6 +191,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
             # if run_once:
             break
         sess.close()
+        # print "prediction\n", prediction
         pred_dictionnary = reformat_prediction(prediction, num_classes)
         classification(pred_dictionnary, output_dir, num_classes, multiclass, fiber_name)
     end = time.time()

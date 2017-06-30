@@ -56,9 +56,9 @@ def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, 
     CLI_DIR = os.path.join(currentPath, "..","CLI")
 
     env_dir = os.path.join(currentPath, "..", "miniconda2")
-    prefix_cli = os.path.join(env_dir,"envs","env-tensorflow","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
-    fibersampling = os.path.join(CLI_DIR, "cxx","fibersampling","bin","bin","fibersampling")
-    fiberfeaturescreator = os.path.join(CLI_DIR,"cxx","fiberfeaturescreator","bin","bin","fiberfeaturescreator")
+    prefix_cli = os.path.join(env_dir,"envs","env_traffic","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
+    fibersampling = os.path.join(CLI_DIR, "cli-build" ,"fibersampling","bin","fibersampling")
+    fiberfeaturescreator = os.path.join(CLI_DIR, "cli-build" ,"fiberfeaturescreator","bin","fiberfeaturescreator")
     if classification:
         cmd_sampling = [prefix_cli, fibersampling,"--input", check_file(input_fiber), "--output",
                  check_path(output_fiber, True), "-N", str(num_points)]

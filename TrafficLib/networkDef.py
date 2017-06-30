@@ -80,7 +80,7 @@ def loss(logits, labels):
     # output:   loss        - loss tensor of type float.
     # logits = tf.cast(logits, tf.float32)
     loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
+        tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits))
         # tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=0.8, name=None))
 
     tf.summary.scalar('loss', loss)
@@ -96,16 +96,6 @@ def training(l, lr):
     train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(l)
     return train_op
 
-
-# def batch_norm(inp, n_out):
-#     beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
-#                        name='beta', trainable=True)
-#     gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
-#                         name='gamma', trainable=True)
-#     batch_mean, batch_var = tf.nn.moments(inp, [0, 1], name='moments')
-#     normed = tf.nn.batch_normalization(inp, batch_mean, batch_var, beta, gamma, 1e-3)
-#
-#     return normed
 
 def batch_norm(inputs, is_training, decay = 0.80):
     scale = tf.Variable(tf.ones([]))

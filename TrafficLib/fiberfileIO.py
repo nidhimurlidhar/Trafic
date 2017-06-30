@@ -93,6 +93,7 @@ def display_loading(index, complete, old_process):
 # Read a .vtk or a .vtp file and return a Polydata
 def read_vtk_data(fiber_filename):
     print "---Reading file ", fiber_filename
+    sys.stdout.flush()
     try:
         if not os.path.isfile(fiber_filename):
             raise Exception('%s is not a file' % fiber_filename)
@@ -100,18 +101,12 @@ def read_vtk_data(fiber_filename):
             reader = vtk.vtkPolyDataReader()
             reader.SetFileName(fiber_filename)
             reader.Update()
-            output = reader.GetOutput()
-            del reader
-            sys.stdout.flush()
-            return output
+            return reader.GetOutput()
         elif fiber_filename.rfind(".vtp") != -1:
             reader = vtk.vtkXMLPolyDataReader()
             reader.SetFileName(fiber_filename)
             reader.Update()
-            output = reader.GetOutput()
-            del reader
-            sys.stdout.flush()
-            return output
+            return reader.GetOutput()
         else:
             raise Exception('Unkmown File Format for %s' % fiber_filename)
     except IOError as e:
@@ -127,12 +122,20 @@ def write_vtk_data(vtk_file, fiber_filename):
         if fiber_filename.rfind(".vtk") != -1:
             writer = vtk.vtkPolyDataWriter()
             writer.SetFileName(fiber_filename)
-            writer.SetInputData(vtk_file)
+            if vtk.VTK_MAJOR_VERSION >5:
+                writer.SetInputData(vtk_file)
+            else:
+                writer.SetInput(vtk_file)
+            del vtk_file
             writer.Update()
         elif fiber_filename.rfind(".vtp") != -1:
             writer = vtk.vtkXMLPolyDataWriter()
             writer.SetFileName(fiber_filename)
-            writer.SetInputData(vtk_file)
+            if vtk.VTK_MAJOR_VERSION >5:
+                writer.SetInputData(vtk_file)
+            else:
+                writer.SetInput(vtk_file)
+            del vtk_file
             writer.Update()
         else:
             raise Exception('Unknown File Format for %s' % fiber_filename)
@@ -144,6 +147,8 @@ def write_vtk_data(vtk_file, fiber_filename):
 # Extract the fibers whose the indexes are in the parameter ids from the bundle, and return a vtkPolydata containing
 # those fibers
 def extract_fiber(bundle, ids):
+    print "ids selected: ", ids.GetNumberOfTuples()
+    sys.stdout.flush()
     selectionNode = vtk.vtkSelectionNode()
     selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
     selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
@@ -153,9 +158,25 @@ def extract_fiber(bundle, ids):
 
     selectionNode.SetSelectionList(ids)
     selection.AddNode(selectionNode)
-    extractSelection.SetInputData(0, bundle)
-    extractSelection.SetInputData(1, selection)
-    extractSelection.Update()
-    vtu2vtkFilter.SetInputData(extractSelection.GetOutput())
+    if vtk.VTK_MAJOR_VERSION > 5:
+        extractSelection.SetInputData(0, bundle)
+        del bundle
+        extractSelection.SetInputData(1, selection)
+        del selection
+        extractSelection.Update()
+        vtu2vtkFilter.SetInputData(extractSelection.GetOutput())
+        del extractSelection
+    else :
+        extractSelection.SetInput(0, bundle)
+        del bundle
+        extractSelection.SetInput(1, selection)
+        del selection
+        extractSelection.Update()
+        vtu2vtkFilter.SetInput(extractSelection.GetOutput())
+        del extractSelection
     vtu2vtkFilter.Update()
-    return vtu2vtkFilter.GetOutput()
+    extract = vtk.vtkPolyData()
+    extract = vtu2vtkFilter.GetOutput()
+    del vtu2vtkFilter
+    del selectionNode
+    return extract
