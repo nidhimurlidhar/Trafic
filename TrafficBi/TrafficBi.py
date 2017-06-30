@@ -773,7 +773,7 @@ class TrafficBiLogic(ScriptedLoadableModuleLogic):
       #
       currentPath = os.path.dirname(os.path.abspath(__file__))
       cli_dir = os.path.join(currentPath, "..","CLI")
-      polydatatransform = os.path.join(cli_dir, "cxx","polydatatransform","bin","bin","polydatatransform") 
+      polydatatransform = os.path.join(cli_dir, "cli-build","polydatatransform","bin","polydatatransform") 
       # lm_ped = "/work/dprince/PED/LandmarksPed/Arc_L_FT_bundle_clean_landmarks.fcsv"
       tmp_dir = os.path.join(currentPath, "tmp_dir_lm_preprocess")
 
@@ -816,12 +816,12 @@ class TrafficBiLogic(ScriptedLoadableModuleLogic):
     pipeline_train_py = os.path.join(TRAFFIC_LIB_DIR, "PipelineTrain.py")
     cmd_py = str(pipeline_train_py) + ' --data_dir ' + str(data_dir) + ' --biclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --lr ' + str(lr) + ' --num_epochs ' + str(num_epochs)
     cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
-    cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env-tensorflow/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
+    cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_traffic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
     # cmd_virtenv = cmd_virtenv + 'export PYTHONHOME=$ENV_DIR/bin/:$PYTHONHOME;'
     cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
-    cmd_virtenv = cmd_virtenv + 'source activate env-tensorflow;'
+    cmd_virtenv = cmd_virtenv + 'source activate env_traffic;'
     cmd_virtenv = cmd_virtenv + 'TEST_PY="/work/dprince/TRAFFIC/Traffic/TrafficBi/Testing/test_TF.py";'
-    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu $ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
     cmd_pipeline_train = cmd_virtenv + str(cmd_py) + ';'
     print(cmd_pipeline_train)
     cmd = ["bash", "-c", str(cmd_pipeline_train)]
@@ -836,7 +836,7 @@ class TrafficBiLogic(ScriptedLoadableModuleLogic):
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2")
     cli_dir = os.path.join(currentPath, "..","CLI")
-    polydatatransform = os.path.join(cli_dir, "cxx","polydatatransform","bin","bin","polydatatransform")
+    polydatatransform = os.path.join(cli_dir, "cli-build","polydatatransform","bin","polydatatransform")
     lm_ped = os.path.join(currentPath, "Resources", "Landmarks", name_fiber + "_bundle_clean_landmarks.fcsv")
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
@@ -850,10 +850,10 @@ class TrafficBiLogic(ScriptedLoadableModuleLogic):
     pipeline_eval_py = os.path.join(TRAFFIC_LIB_DIR, "PipelineEval.py")
     cmd_py = str(pipeline_eval_py) + ' --data_file ' + str(data_file) + ' --biclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --output_dir ' + str(output_dir) + ' --landmark_file ' + str(new_lm_path) + " --fiber_name "+ name_fiber
     cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
-    cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env-tensorflow/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
+    cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_traffic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
     cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
-    cmd_virtenv = cmd_virtenv + 'source activate env-tensorflow;'
-    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu $ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+    cmd_virtenv = cmd_virtenv + 'source activate env_traffic;'
+    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
     cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
     print(cmd_pipeline_class)
     cmd = ["bash", "-c", str(cmd_pipeline_class)]
