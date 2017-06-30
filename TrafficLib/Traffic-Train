@@ -7,10 +7,10 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', action='store', dest='data_dir', help='Input directory ',
                     default="")
-parser.add_argument('--checkpoint_dir', action='store', dest='checkpoint_dir', help='model checkpoints directory ',
+parser.add_argument('--checkpoint_dir', action='store', dest='checkpoint_dir', help='Model checkpoints directory ',
                     default="")
 parser.add_argument('--multiclass', action='store_true', dest='multiclass', help='Enable the multiclassification training',
-                    default=True)
+                    default=False)
 parser.add_argument('--biclass', action='store_true', dest='biclass', help='Enable the biclassification training',
                     default=False)
 parser.add_argument('--lr', action='store', dest='lr', help='Learning rate for the training',
@@ -35,10 +35,10 @@ def traffic_train(data_dir, num_epochs, lr, summary_dir, multiclass, biclass, ch
 	elif biclass:
 		cmd_py = str(pipeline_train_py) + ' --data_dir ' + str(data_dir) + ' --biclass --summary_dir ' + str(summary_dir)+ ' --checkpoint_dir ' + str(checkpoint_dir) + ' --lr ' + str(lr) + ' --num_epochs ' + str(num_epochs)
 	cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
-	cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env-tensorflow/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
+	cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_traffic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
 	cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
-	cmd_virtenv = cmd_virtenv + 'source activate env-tensorflow;'
-	cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu $ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+	cmd_virtenv = cmd_virtenv + 'source activate env_traffic;'
+	cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
 	cmd_pipeline_train = cmd_virtenv + str(cmd_py) + ';'
 	print(cmd_pipeline_train)
 	cmd = ["bash", "-c", str(cmd_pipeline_train)]

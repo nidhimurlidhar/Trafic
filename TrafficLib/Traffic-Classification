@@ -5,23 +5,23 @@ import os
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--output_dir', action='store', dest='output_dir', help='Final output file (.vtk or .vtp)',
+parser.add_argument('--output_dir', action='store', dest='output_dir', help='Final output directory',
                     default='/root/work/DeepLearning/Project/Outputs/')
-parser.add_argument('--data_file', action='store', dest='data_file', help='Input folder containing fibers to test',
+parser.add_argument('--data_file', action='store', dest='data_file', help='Input directory containing fibers to test',
                     default='/root/work/DeepLearning/Project/')
 parser.add_argument('--checkpoint_dir', action='store', dest='checkpoint_dir', help='Path to restrore the model '
                                                                          'of the network (must be a .ckpt)',
                     default="/root/work/DeepLearning/Project/Data/CKPT/model3.ckpt")
-parser.add_argument('--landmark_file', action='store', dest='landmark_file', help='Landmarks File (.vt[k/p], or .fcsv)',
+parser.add_argument('--landmark_file', action='store', dest='landmark_file', help='Landmarks File .fcsv or .vt[k/p])',
                     default="")
-parser.add_argument('--multiclass', action='store_true', dest='multiclass', help='Enable the multiclassification training',
+parser.add_argument('--multiclass', action='store_true', dest='multiclass', help='Enable the multiclassification testing',
                     default=False)
-parser.add_argument('--biclass', action='store_true', dest='biclass', help='Enable the biclassification training',
+parser.add_argument('--biclass', action='store_true', dest='biclass', help='Enable the biclassification testing',
                     default=False)
 parser.add_argument('--summary_dir', action='store', dest='summary_dir', help='Summary directory ',
                     default="")
-parser.add_argument('--fiber_name', action='store', dest='fiber_name', help='Summary directory ',
-                    default="")
+parser.add_argument('--fiber_name', action='store', dest='fiber_name', help='Name of the fiber for the biclassification case ',
+                    default="Fiber")
 
 
 def is_valid_multi_dir(directory):
@@ -38,11 +38,12 @@ def traffic_eval(data_file, output_dir, landmark_file, checkpoint_dir, summary_d
 		cmd_py = str(pipeline_eval_py) + ' --data_file ' + str(data_file) + ' --multiclass --summary_dir ' + str(summary_dir)+ ' --checkpoint_dir ' + str(checkpoint_dir) + ' --output_dir ' + str(output_dir) + ' --fiber_name ' + str(fiber_name) + ' --landmark_file ' + str(landmark_file)
 	elif biclass:
 		cmd_py = str(pipeline_eval_py) + ' --data_file ' + str(data_file) + ' --biclass --summary_dir ' + str(summary_dir)+ ' --checkpoint_dir ' + str(checkpoint_dir) + ' --output_dir ' + str(output_dir) + ' --fiber_name ' + str(fiber_name) + ' --landmark_file ' + str(landmark_file)
+#	cmd_py = "/work/dprince/Traffic/TrafficLib/tf_upgrape.py --infile /work/dprince/Traffic/TrafficLib/runTraining.py  --outfile /work/dprince/Traffic/TrafficLib/runTraining_2.py"
 	cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
-	cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env-tensorflow/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
+	cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_traffic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
 	cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
-	cmd_virtenv = cmd_virtenv + 'source activate env-tensorflow;'
-	cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/:$ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu $ENV_DIR/envs/env-tensorflow/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+	cmd_virtenv = cmd_virtenv + 'source activate env_traffic;'
+	cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_traffic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
 	cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
 	print(cmd_pipeline_class)
 	cmd = ["bash", "-c", str(cmd_pipeline_class)]

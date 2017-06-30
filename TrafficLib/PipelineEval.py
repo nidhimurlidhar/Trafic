@@ -30,7 +30,7 @@ parser.add_argument('--biclass', action='store_true', dest='biclass', help='Enab
                     default=False)
 parser.add_argument('--summary_dir', action='store', dest='summary_dir', help='Summary directory ',
                     default="")
-parser.add_argument('--fiber_name', action='store', dest='fiber_name', help='Summary directory ',
+parser.add_argument('--fiber_name', action='store', dest='fiber_name', help='Name of the fiber for the biclassification case ',
                     default="")
 
 
@@ -42,7 +42,7 @@ def run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summ
   store_py = os.path.join(currentPath, 'runStore.py')
   classification_py = os.path.join(currentPath, 'runClassification.py')
   env_dir = os.path.join(currentPath, "..", "miniconda2")
-  prefix = os.path.join(env_dir,"envs","env-tensorflow","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
+  prefix = os.path.join(env_dir,"envs","env_traffic","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
   pythonPath = os.path.join(env_dir,"bin","python")
 
   src_dir = os.path.dirname(data_file)
@@ -54,18 +54,25 @@ def run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summ
 
   print "---Storing Dataset..."
   sys.stdout.flush()
-  cmd_store = [prefix, pythonPath, store_py, "--test_dir", tmp_dir, "--original_dir", src_dir,"--num_landmarks",str(num_landmarks)]
-  out, err = subprocess.Popen(cmd_store, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-  print("\nout : " + str(out) + "\nerr : " + str(err))
+  # cmd_store = [prefix, pythonPath, store_py, "--test_dir", tmp_dir, "--original_dir", src_dir,"--num_landmarks",str(num_landmarks)]
+  # out, err = subprocess.Popen(cmd_store, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+  # print("\nout : " + str(out) + "\nerr : " + str(err))
 
-  # run_store(test_dir=tmp_dir, original_dir=src_dir, num_landmarks=num_landmarks)
+  run_store(test_dir=tmp_dir, original_dir=src_dir, num_landmarks=num_landmarks)
 
   print "---Classifying Dataset..."
-  cmd_class = [prefix, pythonPath, classification_py, "--data_dir",tmp_dir,"--output_dir",output_dir,"--checkpoint_dir",checkpoint_dir,"--summary_dir",summary_dir, "--fiber_name", fiber_name]
-  if num_landmarks == 32:
-    cmd_class.append("--multiclass")
-  out, err = subprocess.Popen(cmd_class, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-  print("\nout : " + str(out) + "\nerr : " + str(err))
+  sys.stdout.flush()
+  multi = False
+  if num_landmarks==5:
+    multi=False
+  elif num_landmarks==32:
+    multi=True
+  run_classification(tmp_dir, output_dir, checkpoint_dir, summary_dir, fiber_name=fiber_name, multiclass=multi)
+  # cmd_class = [prefix, pythonPath, classification_py, "--data_dir",tmp_dir,"--output_dir",output_dir,"--checkpoint_dir",checkpoint_dir,"--summary_dir",summary_dir, "--fiber_name", fiber_name]
+  # if num_landmarks == 32:
+    # cmd_class.append("--multiclass")
+  # out, err = subprocess.Popen(cmd_class, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+  # print("\nout : " + str(out) + "\nerr : " + str(err))
 
   shutil.rmtree(tmp_dir)
 
