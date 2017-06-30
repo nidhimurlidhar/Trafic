@@ -35,8 +35,13 @@ def read_training(train_dir, num_landmarks, num_points, landmarks, curvature, to
             except IOError as e:
                 print('Could not read:', fiber_file, ':', e, '- it\'s ok, skipping.')
     num_fib = len(dataset)
-    num_feat = len(dataset[0])
-    num_pt = len(dataset[0][0])
+    num_feat = 0
+    if landmarks:
+        num_feat+=num_landmarks
+    if curvature:
+        num_feat+=1
+    if torsion:
+        num_feat+=1
 
     # Shuffle data
     permutation = np.random.permutation(num_fib)
@@ -44,12 +49,12 @@ def read_training(train_dir, num_landmarks, num_points, landmarks, curvature, to
     # labels = np.asrray(labels)[permutation]
 
     # Create an instance of the class train_data where we are going to store our training data
-    train_data = data_set(num_fib, num_feat, num_pt)
+    train_data = data_set(num_fib, num_feat, num_points)
     data_t = train_data.data
-    print ""
-    print np.asarray(labels)[permutation[50]]
-    print ""
-    print np.asarray(dataset)[permutation[50]]
+    # print ""
+    # print np.asarray(labels)[permutation[50]]
+    # print ""
+    # print np.asarray(dataset)[permutation[50]]
     # print ""
     # print np.asarray(labels)[permutation[50]]
     # print ""
@@ -67,70 +72,14 @@ def read_training(train_dir, num_landmarks, num_points, landmarks, curvature, to
     # print train_data.labels[50]
     # print ""
     # print train_data.data[50]
-    # for i in xrange(250):
+    # for i in xrange(50):
     #     print train_data.labels[i]
+    #     sys.stdout.flush()
     
     print "Data Set :", train_data.data.shape
 
     return train_data
 
-
-# def read_testing(test_dir, src_dir, num_landmarks, num_points, landmarks, curvature, torsion):
-#     dataset = []
-#     data_names = []
-#     fibers = [
-#         os.path.join(test_dir, d) for d in sorted(os.listdir(test_dir))
-#         if os.path.isfile(os.path.join(test_dir, d))]
-
-#     for fiber_file in fibers:
-#         if fiber_file.rfind(".vtk")!= -1 or fiber_file.rfind(".vtp")!= -1 :
-#             name_fiber = os.path.basename(fiber_file)
-#             name_src = os.path.join(src_dir, name_fiber)
-#             try:
-#                 data_fiber, data_name = fiber_extract_feature(fiber_file, landmarks, curvature, torsion,
-#                                                       num_landmarks, num_points, name_src, train=False)
-#                 dataset += data_fiber
-#                 data_names += data_name
-#             except IOError as e:
-#                 print('Could not read:', fiber_file, ':', e, '- it\'s ok, skipping.')
-#         else:
-#             print 'Could not read:', fiber_file, 'Not a vtk file ...Skipping.'
-
-#     num_fib = len(dataset)
-#     num_feat = len(dataset[0])
-#     num_pt = len(dataset[0][0])
-#     print "Nb Fibers:", num_fib
-#     print "Nb Features:", num_feat
-#     print "Nb Points:", num_pt
-
-#     # # Create an instance of the class train_data where we are going to store our training data
-#     # test_data = data_set(num_fib, num_feat, num_pt) # type_lab=np.str, type_dat=np.float64)
-#     # data_t = test_data.data
-#     # print ""
-#     # print np.asarray(data_names)[50]
-#     # print ""
-#     # print np.asarray(dataset)[50]
-
-#     # for i in xrange(num_fib):
-#     #     data_t[i] = dataset[0]
-#     #     del dataset[0]
-#     # test_data.labels=np.asarray(data_names)
-#     # del data_names
-
-#     # print test_data.labels[50]
-#     # print ""
-#     # print test_data.data[50]
-#     # print ""
-#     # print "Testing Set :", test_data.data.shape
-#     # return test_data
-    
-#     # Create an instance of the class train_data where we are going to store our training data
-#     test_data = data_set(num_fib, num_feat, num_pt) # type_lab=np.str, type_dat=np.float64)
-#     test_data.data = np.array(dataset)
-#     test_data.labels = np.array(data_names)
-#     print "Testing Set :", test_data.data.shape
-#     return test_data
-#     
 def read_testing(test_dir, src_dir, num_landmarks, num_points, landmarks, curvature, torsion):
     dataset = []
     data_names = []

@@ -637,19 +637,18 @@ class TrafficBiWidget(ScriptedLoadableModuleWidget):
   def OnTrainReset(self):
     self.num_epochs_spinbox.setValue(1)
     self.lr_spinbox.setValue(0.01)
-    self.sumDirTrain.text = "/tmp"
+    self.sumDirTrain.text = ""
     self.modelDirTrain.text = ""
     self.dataDirTrain.text = ""
 
   def OnClassReset(self):
-    self.sumDirClass.text = "/tmp"
+    self.sumDirClass.text = ""
     self.modelDirClass.text = ""
     self.outputDirClass.text = ""
     self.inputClass.text = ""
-
+    self.dFPathClass.text = ""
   def OnClassRun(self):
     if self.CheckInputClass() and self.CheckOutputDirClass() and self.CheckModelDirClass() and self.CheckSumDirClass() and self.CheckdFClassPath() and self.CheckFiberListClass():
-      print "IN IN IN"
       logic = TrafficBiLogic()
       logic.runClassification(self.inputClass.text, self.modelDirClass.text, self.sumDirClass.text, self.outputDirClass.text, self.dFPathClass.text, self.fiberListClass.itemText(self.fiberListClass.currentIndex))
     return
@@ -861,7 +860,7 @@ class TrafficBiLogic(ScriptedLoadableModuleLogic):
     err = open(os.path.join(TRAFFIC_LIB_DIR,"Logs","classification_err.txt"), "wb")
     _, _ = subprocess.Popen(cmd, stdout=out, stderr=err).communicate()
     # print("\nout : " + str(out) + "\nerr : " + str(err))
-    # rmtree(tmp_dir)
+    rmtree(tmp_dir)
 
     # print("\nout : " + str(out) + "\nerr : " + str(err))
     return

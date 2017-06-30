@@ -814,7 +814,7 @@ class TrafficMultiLogic(ScriptedLoadableModuleLogic):
     err = open(os.path.join(TRAFFIC_LIB_DIR,"Logs","classification_err.txt"), "wb")
     _, _ = subprocess.Popen(cmd, stdout=out, stderr=err).communicate()
     # print("\nout : " + str(out) + "\nerr : " + str(err))
-    # rmtree(tmp_dir)
+    rmtree(tmp_dir)
 
     # print("\nout : " + str(out) + "\nerr : " + str(err))
     return
