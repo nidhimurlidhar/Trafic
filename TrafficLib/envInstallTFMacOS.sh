@@ -31,7 +31,6 @@ envInstall () {
 		py_v='3'
 	fi
 
-	cd /tmp
 
 	# Get the bash installer for linux 64bit python 2.7
 	echo "I. Conda installation"
@@ -42,7 +41,7 @@ envInstall () {
 		curl -O https://repo.continuum.io/miniconda/Miniconda"$py_v"-latest-MacOSX-x86_64.sh
 	fi
 	# We install miniconda
-	bash /tmp/Miniconda"$py_v"-latest-MacOSX-x86_64.sh -b -p $TRAFFIC_DIR'/miniconda/'
+	bash Miniconda"$py_v"-latest-MacOSX-x86_64.sh -b -p $TRAFFIC_DIR'/miniconda/'
 	echo "===> Conda installed"
 
 	# We add to path miniconda/bin directory
@@ -63,9 +62,9 @@ envInstall () {
 
 case $# in 
 	
-	3)
-	check_args $1 $2 $3
-	envInstall $1 $2 $3
+	2)
+	check_args $1 $2
+	envInstall $1 $2
 	;;
 
 	*)
