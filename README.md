@@ -38,5 +38,6 @@ TUTO ON EACH PARAMETER
 ### Future Improvement
 * Use slicer.run to run CLI, instead of subprocess
 * Change path of CLI directory
+* Add a verification for the training data set that must be valid
 ## LICENSE
 see LICENSE
