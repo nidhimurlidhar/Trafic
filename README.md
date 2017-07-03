@@ -20,6 +20,7 @@ Trafic is a program that performs classification of tract fibers using deep lear
 Trafic is an extension made by two modules:
 * TraficBi for the Biclassification
 * TrafficMulti for the Multiclassification
+
 Each Module has three tabs:
 * The Edition Tab
 * THe Training Tab
