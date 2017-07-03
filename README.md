@@ -18,4 +18,4 @@ Trafic is a program that performs classification of tract fibers using deep lear
 ### Future Improvement
 * 
 ## LICENSE
-see License
+see LICENSE
