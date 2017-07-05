@@ -28,16 +28,13 @@ Each Module has three tabs:
 
 ### The Edition Tab
 This tab permits to create a training data set or add some data to an existent one.
-TUTO ON EACH PARAMETER
 ### The training Tab
 The training tab permits to train our algorithm on a valid training data set. It is recommended to use the edition tab to create the dataset.
-TUTO ON EACH PARAMETER
 ### The classification Tab
 The classification tab, performs the actual classification using the model trained previously.
-TUTO ON EACH PARAMETER
 ### Future Improvement
 * Use slicer.run to run CLI, instead of subprocess
-* Change path of CLI directory
+* Check path of CLI directory
 * Add a verification for the training data set that must be valid
 ## LICENSE
 see LICENSE
