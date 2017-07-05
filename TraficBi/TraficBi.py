@@ -15,19 +15,22 @@ from envInstallTF import runMaybeEnvInstallTF
 # print runPreprocess
 import logging
 
+# TMP_DIR = "/work/dprince/DirectoryTest/"
+# TRAIN_DIR = "/work/dprince/Multiclass/Train_32_Cleaned/"
+# MODEL_DIR = "/work/dprince/Trash/Models/"
 
 #
-# TraficMulti
+# TraficBi
 #
 
-class TraficMulti(ScriptedLoadableModule):
+class TraficBi(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
 
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "TraficMulti" # TODO make this more human readable by adding spaces
+    self.parent.title = "TraficBi" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Classification"]
     self.parent.dependencies = []
     self.parent.contributors = ["Prince Ngattai Lam (UNC-NIRAL)"] # replace with "Firstname Lastname (Organization)"
@@ -37,10 +40,10 @@ class TraficMulti(ScriptedLoadableModule):
 """ # replace with organization, grant and thanks.
 
 #
-# TraficMultiWidget
+# TraficBiWidget
 #
 
-class TraficMultiWidget(ScriptedLoadableModuleWidget):
+class TraficBiWidget(ScriptedLoadableModuleWidget):
   """Uses ScriptedLoadableModuleWidget base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
@@ -50,7 +53,7 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     #                                UI FILES LOADING                                   #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     loader = qt.QUiLoader()
-    self.EditionTabName = 'TraficMultiEditionTab'
+    self.EditionTabName = 'TraficBiEditionTab'
     scriptedModulesPath = eval('slicer.modules.%s.path' % self.moduleName.lower())
     scriptedModulesPath = os.path.dirname(scriptedModulesPath)
     path = os.path.join(scriptedModulesPath, 'Resources', 'UI', '%s.ui' % self.EditionTabName)
@@ -68,7 +71,9 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     displayFibersCollapsibleButton = ctk.ctkCollapsibleButton()
     displayFibersCollapsibleButton.text = "Fiber Bundle"
     self.editionLayout.addWidget(displayFibersCollapsibleButton)
-
+    self.fiberList = qt.QComboBox()
+    self.fiberList.addItems(self.name_labels)
+    self.fiberList.setMaxVisibleItems(5)
     # Layout within the dummy collapsible button
     displayFibersFormLayout = qt.QFormLayout(displayFibersCollapsibleButton)
 
@@ -85,7 +90,7 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     self.inputFiber.showChildNodeTypes = False
     self.inputFiber.setMRMLScene(slicer.mrmlScene)
     displayFibersFormLayout.addRow("Input Fiber", self.inputFiber)
-
+    displayFibersFormLayout.addRow("Type of Fiber", self.fiberList)
     # self.progress = qt.QProgressDialog()
     # self.progress.setValue(0)
     # self.progress.show()
@@ -104,16 +109,10 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     self.selectionFiber = self.getWidget('qSlicerTractographyEditorROIWidget', index_tab=0)
     self.ROISelectorDisplay = self.getWidget('ROIForFiberSelectionMRMLNodeSelector', index_tab=0)
     self.ROISelectorDisplay.setMRMLScene(slicer.mrmlScene)
-    self.fiberList = self.getWidget('fiberList', index_tab=0)
-    name_labels = ['Select a type of fiber','0','Arc_L_FT','Arc_L_FrontoParietal','Arc_L_TemporoParietal','Arc_R_FT','Arc_R_FrontoParietal','Arc_R_TemporoParietal','CGC_L','CGC_R','CGH_L','CGH_R','CorpusCallosum_Genu',
-               'CorpusCallosum_Motor','CorpusCallosum_Parietal','CorpusCallosum_PreMotor','CorpusCallosum_Rostrum','CorpusCallosum_Splenium','CorpusCallosum_Tapetum','CorticoFugal-Left_Motor',
-               'CorticoFugal-Left_Parietal','CorticoFugal-Left_PreFrontal','CorticoFugal-Left_PreMotor','CorticoFugal-Right_Motor','CorticoFugal-Right_Parietal','CorticoFugal-Right_PreFrontal',
-               'CorticoFugal-Right_PreMotor','CorticoRecticular-Left','CorticoRecticular-Right','CorticoSpinal-Left','CorticoSpinal-Right','CorticoThalamic_L_PreFrontal','CorticoThalamic_L_SUPERIOR',
-               'CorticoThalamic_Left_Motor','CorticoThalamic_Left_Parietal','CorticoThalamic_Left_PreMotor','CorticoThalamic_R_PreFrontal','CorticoThalamic_R_SUPERIOR',
-               'CorticoThalamic_Right_Motor','CorticoThalamic_Right_Parietal','CorticoThalamic_Right_PreMotor','Fornix_L','Fornix_R','IFOF_L','IFOF_R','ILF_L','ILF_R',
-               'OpticRadiation_Left','OpticRadiation_Right','Optic_Tract_L','Optic_Tract_R','SLF_II_L','SLF_II_R','UNC_L','UNC_R']
-    self.fiberList.addItems(name_labels)
-    self.fiberList.setMaxVisibleItems(5)
+    self.classList = self.getWidget('fiberList', index_tab=0)
+    name_classes = ['Select class of fiber', 'Negative','Positive']
+    self.classList.addItems(name_classes)
+    self.classList.setMaxVisibleItems(5)
     # selectionFibersFormLayout.addRow(self.selectionFiber)
     selectionFibersFormLayout.addRow(self.selectionFiber)
 
@@ -184,12 +183,14 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     self.editionLayout.addLayout(gridLayoutClearSave)
 
 
-
-    self.nodeDict = {}
+    self.nodeDict ={}
+    self.nodePosDict = {}
+    self.nodeNegDict = {}
 
     # Initialization of the dictionnary that will contains the Node ID and their type
-    for i in xrange(1, len(name_labels)):
-      self.nodeDict[name_labels[i]] = []
+    for i in xrange(1, len(self.name_labels)):
+      self.nodePosDict[self.name_labels[i]] = []
+      self.nodeNegDict[self.name_labels[i]] = []
 
 
     self.editionLayout.addStretch(1)
@@ -331,13 +332,15 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     gridLayoutClass.addWidget(qt.QLabel("Displacement Field"), 4, 0)
     gridLayoutClass.addWidget(self.dFPathClass, 4, 1)
     gridLayoutClass.addWidget(self.dFPathClassSelector, 4, 2)
+    self.fiberListClass = qt.QComboBox()
+    self.fiberListClass.addItems(self.name_labels)
 
     gridResClass = qt.QGridLayout()
     self.classReset = qt.QPushButton("RESET")
     self.classRun = qt.QPushButton("RUN")
     gridResClass.addWidget(self.classReset, 0, 0)
     gridResClass.addWidget(self.classRun, 0, 1)
-
+    self.classificationLayout.addWidget(self.fiberListClass)
     self.classificationLayout.addLayout(gridLayoutClass)
     self.classificationLayout.addLayout(gridResClass)
     self.classificationLayout.addStretch(1)
@@ -369,7 +372,15 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     ScriptedLoadableModuleWidget.setup(self)
 
     os.environ['ITK_AUTOLOAD_PATH']= ''
-    self.moduleName = 'TraficMulti'
+    self.name_labels = ['Select a type of fiber','0','Arc_L_FT','Arc_L_FrontoParietal','Arc_L_TemporoParietal','Arc_R_FT','Arc_R_FrontoParietal','Arc_R_TemporoParietal','CGC_L','CGC_R','CGH_L','CGH_R','CorpusCallosum_Genu',
+           'CorpusCallosum_Motor','CorpusCallosum_Parietal','CorpusCallosum_PreMotor','CorpusCallosum_Rostrum','CorpusCallosum_Splenium','CorpusCallosum_Tapetum','CorticoFugal-Left_Motor',
+           'CorticoFugal-Left_Parietal','CorticoFugal-Left_PreFrontal','CorticoFugal-Left_PreMotor','CorticoFugal-Right_Motor','CorticoFugal-Right_Parietal','CorticoFugal-Right_PreFrontal',
+           'CorticoFugal-Right_PreMotor','CorticoRecticular-Left','CorticoRecticular-Right','CorticoSpinal-Left','CorticoSpinal-Right','CorticoThalamic_L_PreFrontal','CorticoThalamic_L_SUPERIOR',
+           'CorticoThalamic_Left_Motor','CorticoThalamic_Left_Parietal','CorticoThalamic_Left_PreMotor','CorticoThalamic_R_PreFrontal','CorticoThalamic_R_SUPERIOR',
+           'CorticoThalamic_Right_Motor','CorticoThalamic_Right_Parietal','CorticoThalamic_Right_PreMotor','Fornix_L','Fornix_R','IFOF_L','IFOF_R','ILF_L','ILF_R',
+           'OpticRadiation_Left','OpticRadiation_Right','Optic_Tract_L','Optic_Tract_R','SLF_II_L','SLF_II_R','UNC_L','UNC_R']
+
+    self.moduleName = 'TraficBi'
     self.editionTabWidget = qt.QWidget()
     self.trainingTabWidget = qt.QWidget()
     self.classificationTabWidget = qt.QWidget()
@@ -552,6 +563,14 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     if fileDialog.exec_():
       text = fileDialog.selectedFiles()
       dir.setText(text[0])
+  def CheckFiberListClass(self):
+    if self.fiberListClass.currentIndex == 0:
+      msg = qt.QMessageBox()
+      msg.setIcon(3)
+      msg.setText("Please select a type of fiber to classify")
+      msg.exec_()
+      return False
+    return True
 
   def CheckBrowseDirectory(self, dir, name):
     if dir.text=="":
@@ -591,46 +610,50 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
   def onSaveButton(self):
 
     #TO DO: Save all Data and Clear after + Add a message box to confirm the save + Message to choose the dF
+    print "IN"
     if self.checkdFPath() and self.CheckOutputDirEdit():
+      print "1"
       currentPath = os.path.dirname(os.path.abspath(__file__))
       tmp_dir = os.path.join(self.outputDirEdit.text, 'tmp_dir_save')
-      final_dir = os.path.join(self.outputDirEdit.text, 'Multiclass')
-      logic = TraficMultiLogic()
-      logic.runSaveFiber(self.nodeDict, tmp_dir)
+      final_dir = os.path.join(self.outputDirEdit.text, 'Biclass')
+      logic = TraficBiLogic()
+      print "1"
+      logic.runSaveFiber(self.nodeNegDict, self.nodePosDict, tmp_dir)
+      print "1"
       self.removeNodeExtracted()
       # Initialization of the dictionnary
-      for key in self.nodeDict.keys():
-        self.nodeDict[key] = []
-
-      logic.runPreProcess(self.dFPath.displayText, tmp_dir, final_dir)
+      for key in self.nodeNegDict.keys():
+        self.nodeNegDict[key] = []
+      for key in self.nodePosDict.keys():
+        self.nodePosDict[key] = []
+      print "1"
+      logic.runPreProcess(self.dFPath.text, tmp_dir, final_dir)
+      print "1"
       rmtree(tmp_dir)
         # logic.runStore()
 
   def OnTrainReset(self):
     self.num_epochs_spinbox.setValue(1)
     self.lr_spinbox.setValue(0.01)
-    self.sumDirTrain.text = "/tmp"
+    self.sumDirTrain.text = ""
     self.modelDirTrain.text = ""
     self.dataDirTrain.text = ""
 
   def OnClassReset(self):
-    self.sumDirClass.text = "/tmp"
+    self.sumDirClass.text = ""
     self.modelDirClass.text = ""
     self.outputDirClass.text = ""
     self.inputClass.text = ""
-
+    self.dFPathClass.text = ""
   def OnClassRun(self):
-    print "IN"
-    if self.CheckInputClass() and self.CheckOutputDirClass() and self.CheckModelDirClass() and self.CheckSumDirClass() and self.CheckdFClassPath():
-      print "IN IN IN"
-      logic = TraficMultiLogic()
-      logic.runClassification(self.inputClass.text, self.modelDirClass.text, self.sumDirClass.text, self.outputDirClass.text, self.dFPathClass.text)
-    print "TOO BAD"
+    if self.CheckInputClass() and self.CheckOutputDirClass() and self.CheckModelDirClass() and self.CheckSumDirClass() and self.CheckdFClassPath() and self.CheckFiberListClass():
+      logic = TraficBiLogic()
+      logic.runClassification(self.inputClass.text, self.modelDirClass.text, self.sumDirClass.text, self.outputDirClass.text, self.dFPathClass.text, self.fiberListClass.itemText(self.fiberListClass.currentIndex))
     return
 
   def OnTrainTrain(self):
     if self.CheckDataDirTrain() and self.CheckModelDirTrain() and self.CheckSumDirTrain():
-        logic = TraficMultiLogic()
+        logic = TraficBiLogic()
         logic.runStoreAndTrain( self.dataDirTrain.text, self.modelDirTrain.text, self.lr_spinbox.value, self.num_epochs_spinbox.value, self.sumDirTrain.text )
     return
   def onClearButton(self):
@@ -644,19 +667,24 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
     return
 
   def removeNodeExtracted(self):
-    nodeIDs = np.array(self.nodeDict.values())
-    nodeIDs = [val for sublist in nodeIDs for val in sublist] #Flatten the list
+    negIDs = np.array(self.nodeNegDict.values())
+    posIDs = np.array(self.nodePosDict.values())
+    negIDs = [val for sublist in negIDs for val in sublist] #Flatten the list
+    posIDs = [val for sublist in posIDs for val in sublist] #Flatten the list
     # print nodeIDs
-    for nodeID in nodeIDs:
+    for nodeID in posIDs:
+      slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetNodeByID(nodeID))
+      print "Remove ", nodeID
+    for nodeID in negIDs:
       slicer.mrmlScene.RemoveNode(slicer.mrmlScene.GetNodeByID(nodeID))
       print "Remove ", nodeID
 
 
   def OnExtractFiber(self):
-    if self.fiberList.itemText(self.fiberList.currentIndex) == "Select a type of fiber":
+    if self.classList.currentIndex == 0 or self.classList.currentIndex == 0:
       msg = qt.QMessageBox()
       msg.setIcon(3)
-      msg.setText("You must choose which type of fiber you want to extract from the current fiber")
+      msg.setText("You must choose the type and the class you want to extract from the current fiber")
       msg.exec_()
     elif self.disROI.isChecked():
       msg = qt.QMessageBox()
@@ -665,29 +693,26 @@ class TraficMultiWidget(ScriptedLoadableModuleWidget):
       msg.exec_()
     else:
       nameNode = self.fiberList.itemText(self.fiberList.currentIndex)
-      # Process To modify the name
-      
-      # If not already exist 
-      # self.reviewsFormLayout.addRow(reviewNode)
-      # self.ROISelector.setAnnotationMRMLNodeForFiberSelection(newNode)
 
-      # print self.ROISelector.fiberBundleNode()
-      
       self.ROISelector.FiberBundleFromSelection.addNode()
       nodeID = self.ROISelector.FiberBundleFromSelection.currentNode().GetID()
-      self.nodeDict[nameNode].append(nodeID)
-      numExtract = len(self.nodeDict[nameNode])
-      self.ROISelector.FiberBundleFromSelection.currentNode().SetName(nameNode+"_extracted_"+str(numExtract))
-      
-      logic = TraficMultiLogic()
+      if self.classList.currentIndex == 1:
+        self.nodeNegDict[nameNode].append(nodeID)
+        numExtract = len(self.nodeNegDict[nameNode])
+        self.ROISelector.FiberBundleFromSelection.currentNode().SetName(nameNode+"_negative_extracted_"+str(numExtract))
+      elif self.classList.currentIndex == 2:
+        self.nodePosDict[nameNode].append(nodeID)
+        numExtract = len(self.nodePosDict[nameNode])
+        self.ROISelector.FiberBundleFromSelection.currentNode().SetName(nameNode+"_positive_extracted_"+str(numExtract))
+      logic = TraficBiLogic()
       logic.runExtractFiber(self.ROISelector, self.posROI.isChecked(), self.negROI.isChecked())
 
     return
 #
-# TraficMultiLogic
+# TraficBiLogic
 #
 
-class TraficMultiLogic(ScriptedLoadableModuleLogic):
+class TraficBiLogic(ScriptedLoadableModuleLogic):
   """This class should implement all the actual
   computation done by your module.  The interface
   should be such that other python code can import
@@ -710,59 +735,84 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     selector.negativeROISelection(neg) 
     selector.positiveROISelection(pos)
 
-  def runSaveFiber(self, nodeDict, dir):
+  def runSaveFiber(self, negDict, posDict, dir):
     """
     Run the save algorithm
     TO DO: Add some verification + Save through the server + Which Location ? + How to identify fibers and dF ?
     """
-
+    if not os.path.dirname(dir):
+      os.makedirs(dir)
     logging.info('Saving Fibers')
-    for key in nodeDict.keys():
+    for key in negDict.keys():
       dirname = os.path.join(dir, key)
-      if not os.path.isdir(dirname):
-        os.makedirs(dirname)
+      for j in xrange(len(negDict[key])):
+        dirnameNeg = os.path.join(dirname, 'Negative')
+        if not os.path.isdir(dirnameNeg):
+          os.makedirs(dirnameNeg)
+        filename = os.path.join( dirnameNeg, key+"_"+str(len(os.listdir(dirnameNeg)))+".vtk" )
+        node = slicer.mrmlScene.GetNodeByID(negDict[key][j])
+        print filename
+        slicer.util.saveNode(node, filename)
 
-
-      for j in xrange(len(nodeDict[key])):
-        filename = os.path.join( dirname, key+"_"+str(len(os.listdir(dirname)))+".vtk" )
-        node = slicer.mrmlScene.GetNodeByID(nodeDict[key][j])
+      for h in xrange(len(posDict[key])):
+        dirnamePos = os.path.join(dirname, 'Positive')
+        if not os.path.isdir(dirnamePos):
+          os.makedirs(dirnamePos)
+        filename = os.path.join( dirnamePos, key+"_"+str(len(os.listdir(dirnamePos)))+".vtk" )
+        node = slicer.mrmlScene.GetNodeByID(posDict[key][h])
         print filename
         slicer.util.saveNode(node, filename)
     logging.info('Fibers saved')
 
-  def runPreProcess(self, dF_path, input_dir, output_dir):
-    #TO CHANGE: LOCATION OF CLI AND VARIABLES
-    #
-    currentPath = os.path.dirname(os.path.abspath(__file__))
-    cli_dir = os.path.join(currentPath, "..","cli-modules")
-    polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    lm_ped = "/work/dprince/Multiclass/Landmarks/landmarks_32pts_afprop.fcsv"
-    tmp_dir = os.path.join(currentPath, "tmp_dir_lm_preprocess")
+  def runPreProcess(self, dF_path, save_dir, final_dir):
 
-    logging.info('Preprocessing started')
-    new_lm_path = os.path.join(tmp_dir, "lm_prepocess.fcsv")
-    if not os.path.isdir(tmp_dir):
+      #TO CHANGE: LOCATION OF CLI AND VARIABLES
+      #
+      currentPath = os.path.dirname(os.path.abspath(__file__))
+      cli_dir = os.path.join(currentPath, "..","cli-modules")
+      polydatatransform = os.path.join(cli_dir, "polydatatransform") 
+      # lm_ped = "/work/dprince/PED/LandmarksPed/Arc_L_FT_bundle_clean_landmarks.fcsv"
+      tmp_dir = os.path.join(currentPath, "tmp_dir_lm_preprocess")
+
+      logging.info('Preprocessing started')
+      new_lm_path = os.path.join(tmp_dir, "lm_prepocess.fcsv")
+      if not os.path.isdir(tmp_dir):
         os.makedirs(tmp_dir)
 
-    logging.info('Polydata transform')
-    cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_path, "-o", new_lm_path]
-    out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    # print("\nout : " + str(out))
-    if err != "":
-        print("\nerr : " + str(err))
-    logging.info('Make Dataset')
-    run_make_dataset(input_dir, output_dir, new_lm_path, landmarksOn=True)
-    rmtree(tmp_dir)
-    logging.info('Preprocessing completed')
+      # logging.info('Polydata transform')
+      # cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_path, "-o", new_lm_path]
+      # out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+      # print("\nout : " + str(out))
+      # if err != "":
+        # print("\nerr : " + str(err))
+      logging.info('Make Dataset')
 
-    return
+
+      fiber_list = os.listdir(save_dir)
+      for _, fiber in enumerate(fiber_list):
+        lm_ped = os.path.join(currentPath, "Resources", "Landmarks", fiber + "_bundle_clean_landmarks.fcsv")
+        cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_path, "-o", new_lm_path]
+        out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        print("\nout :\n " + str(out))
+
+        input_dir = os.path.join(save_dir, fiber)
+        output_dir = os.path.join(final_dir, fiber)
+        if not os.path.isdir(output_dir):
+          os.makedirs(output_dir)
+          os.makedirs(os.path.join(output_dir, "Negative"))
+          os.makedirs(os.path.join(output_dir, "Positive"))
+        run_make_dataset(input_dir, output_dir, landmark_file=new_lm_path)
+      rmtree(tmp_dir)
+      logging.info('Preprocessing completed')
+
+      return
 
   def runStoreAndTrain(self, data_dir, model_dir, lr, num_epochs, sum_dir):
     runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2")
     pipeline_train_py = os.path.join(TRAFIC_LIB_DIR, "PipelineTrain.py")
-    cmd_py = str(pipeline_train_py) + ' --data_dir ' + str(data_dir) + ' --multiclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --lr ' + str(lr) + ' --num_epochs ' + str(num_epochs)
+    cmd_py = str(pipeline_train_py) + ' --data_dir ' + str(data_dir) + ' --biclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --lr ' + str(lr) + ' --num_epochs ' + str(num_epochs)
     cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
     cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_trafic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
     # cmd_virtenv = cmd_virtenv + 'export PYTHONHOME=$ENV_DIR/bin/:$PYTHONHOME;'
@@ -778,13 +828,13 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     # print("\nout : " + str(out) + "\nerr : " + str(err))
     return
 
-  def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path):
+  def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path, name_fiber):
     runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2")
     cli_dir = os.path.join(currentPath, "..","cli-modules")
-    polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    lm_ped = s.path.join(currentPath,"Resources", "landmarks_32pts_afprop.fcsv")
+    polydatatransform = os.path.join(cli_dir, "polydatatransform") 
+    lm_ped = os.path.join(currentPath, "Resources", "Landmarks", name_fiber + "_bundle_clean_landmarks.fcsv")
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
       os.makedirs(tmp_dir)
@@ -795,7 +845,7 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     print("\nout : " + str(out))
 
     pipeline_eval_py = os.path.join(TRAFIC_LIB_DIR, "PipelineEval.py")
-    cmd_py = str(pipeline_eval_py) + ' --data_file ' + str(data_file) + ' --multiclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --output_dir ' + str(output_dir) + ' --landmark_file ' + str(new_lm_path)
+    cmd_py = str(pipeline_eval_py) + ' --data_file ' + str(data_file) + ' --biclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --output_dir ' + str(output_dir) + ' --landmark_file ' + str(new_lm_path) + " --fiber_name "+ name_fiber
     cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
     cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_trafic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
     cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
@@ -817,10 +867,8 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
 
     # return True
 
-    
 
-
-class TraficMultiTest(ScriptedLoadableModuleTest):
+class TraficBiTest(ScriptedLoadableModuleTest):
   """
   This is the test case for your scripted module.
   Uses ScriptedLoadableModuleTest base class, available at:
@@ -836,9 +884,9 @@ class TraficMultiTest(ScriptedLoadableModuleTest):
     """Run as few or as many tests as needed here.
     """
     self.setUp()
-    self.test_TraficMulti1()
+    self.test_TraficBi1()
 
-  def test_TraficMulti1(self):
+  def test_TraficBi1(self):
     """ Ideally you should have several levels of tests.  At the lowest level
     tests should exercise the functionality of the logic with different inputs
     (both valid and invalid).  At higher levels your tests should emulate the
@@ -870,6 +918,6 @@ class TraficMultiTest(ScriptedLoadableModuleTest):
     self.delayDisplay('Finished with download and loading')
 
     volumeNode = slicer.util.getNode(pattern="FA")
-    logic = TraficMultiLogic()
+    logic = TraficBiLogic()
     self.assertTrue( logic.hasImageData(volumeNode) )
     self.delayDisplay('Test passed!')
