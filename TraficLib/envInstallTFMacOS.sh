@@ -41,11 +41,11 @@ envInstall () {
 		curl -O https://repo.continuum.io/miniconda/Miniconda"$py_v"-latest-MacOSX-x86_64.sh
 	fi
 	# We install miniconda
-	bash Miniconda"$py_v"-latest-MacOSX-x86_64.sh -b -p $TRAFIC_DIR'/miniconda/'
+	bash Miniconda"$py_v"-latest-MacOSX-x86_64.sh -b -p $TRAFIC_DIR'/miniconda2/'
 	echo "===> Conda installed"
 
-	# We add to path miniconda/bin directory
-	export PATH=$TRAFIC_DIR'/miniconda/bin/':$PATH
+	# We add to path miniconda2/bin directory
+	export PATH=$TRAFIC_DIR'/miniconda2/bin/':$PATH
 
 	echo "II. Create environment to run tensorflow"
 	conda create -y -n env_trafic python=$PY_VERSION
@@ -55,7 +55,7 @@ envInstall () {
 	source activate env_trafic
 	conda install -y -c conda-forge tensorflow
 	conda install -y -c anaconda vtk
-	touch $TRAFIC_DIR'/miniconda/envs/env_trafic/lib/python2.7/site-packages/google/__init__.py'
+	touch $TRAFIC_DIR'/miniconda2/envs/env_trafic/lib/python2.7/site-packages/google/__init__.py'
 	source deactivate env_trafic
 	echo "===> tensorflow and libraries installed"
 }

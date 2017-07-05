@@ -55,11 +55,11 @@ envInstall () {
 		wget https://repo.continuum.io/miniconda/Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh
 	fi
 	# We install miniconda
-	bash Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh -b -p $TRAFIC_DIR'/miniconda/'
+	bash Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh -b -p $TRAFIC_DIR'/miniconda2/'
 	echo "===> Conda installed"
 
 	# We add the path of
-	export PATH=$TRAFIC_DIR'/miniconda/bin/':$PATH
+	export PATH=$TRAFIC_DIR'/miniconda2/bin/':$PATH
 
 	echo "II. Create environment to run tensorflow"
 	conda create -y -n env_trafic python=$PY_VERSION
@@ -69,7 +69,7 @@ envInstall () {
 	source activate env_trafic
 	conda install -y -c conda-forge tensorflow
 	conda install -y -c anaconda vtk
-	touch $TRAFIC_DIR'/miniconda/envs/env_trafic/lib/python2.7/site-packages/google/__init__.py'
+	touch $TRAFIC_DIR'/miniconda2/envs/env_trafic/lib/python2.7/site-packages/google/__init__.py'
 
 	if [ -f libc6_2.17-0ubuntu5_amd64.deb ]; then
 		echo "Skipping Downloading of libc6_2.17-0ubuntu5_amd64.deb exists already"
@@ -82,7 +82,7 @@ envInstall () {
 		wget http://launchpadlibrarian.net/137699829/libc6-dev_2.17-0ubuntu5_amd64.deb
 	fi
 
-	cd $TRAFIC_DIR'/miniconda/envs/env_trafic/lib/'
+	cd $TRAFIC_DIR'/miniconda2/envs/env_trafic/lib/'
 	mkdir libc6_2.17
 	cd libc6_2.17
 	ar p /tmp/libc6_2.17-0ubuntu5_amd64.deb data.tar.gz | tar zx
