@@ -9,8 +9,8 @@ set(MODULE_PYTHON_SCRIPTS
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
   Resources/UI/TraficMultiEditionTab.ui
-  Resources/UI/TraficMultiTrainingTab.ui
-  Resources/UI/TraficMultiClassificationTab.ui
+  Resources/Landmarks/landmarks_32pts_afprop.fcsv
+
   )
 
 #-----------------------------------------------------------------------------
