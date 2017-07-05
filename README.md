@@ -32,9 +32,12 @@ This tab permits to create a training data set or add some data to an existent o
 The training tab permits to train our algorithm on a valid training data set. It is recommended to use the edition tab to create the dataset.
 ### The classification Tab
 The classification tab, performs the actual classification using the model trained previously.
-### Future Improvement
+
+### TO DO
+* Test the extension on Linux and on Mac
+* Upgrade Polydata (new ITK and VTK version)
+* Test CLI paths
+* Add a verification for the training data set (must be valid i.e 2 folders for bi and 54 for multi)
 * Use slicer.run to run CLI, instead of subprocess
-* Check path of CLI directory
-* Add a verification for the training data set that must be valid
 ## LICENSE
 see LICENSE
