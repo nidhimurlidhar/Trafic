@@ -11,12 +11,10 @@ TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "
 sys.path.append(TRAFIC_LIB_DIR)
 print path.join(TRAFIC_LIB_DIR)
 from makeDataset import run_make_dataset
+from envInstallTF import runMaybeEnvInstallTF
 # print runPreprocess
 import logging
 
-TMP_DIR = "/work/dprince/DirectoryTest/"
-TRAIN_DIR = "/work/dprince/Multiclass/Train_32_Cleaned/"
-MODEL_DIR = "/work/dprince/Trash/Models/"
 
 #
 # TraficMulti
@@ -30,16 +28,12 @@ class TraficMulti(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "TraficMulti" # TODO make this more human readable by adding spaces
-    self.parent.categories = ["Examples"]
+    self.parent.categories = ["Classification"]
     self.parent.dependencies = []
-    self.parent.contributors = ["John Doe (AnyWare Corp.)"] # replace with "Firstname Lastname (Organization)"
+    self.parent.contributors = ["Prince Ngattai Lam (UNC-NIRAL)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
-    This is an example of scripted loadable module bundled in an extension.
-    It performs a simple thresholding on the input volume and optionally captures a screenshot.
     """
     self.parent.acknowledgementText = """
-    This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
-    and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
 """ # replace with organization, grant and thanks.
 
 #
@@ -737,33 +731,34 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     logging.info('Fibers saved')
 
   def runPreProcess(self, dF_path, input_dir, output_dir):
+    #TO CHANGE: LOCATION OF CLI AND VARIABLES
+    #
+    currentPath = os.path.dirname(os.path.abspath(__file__))
+    cli_dir = os.path.join(currentPath, "..", "..","cli-modules")
+    polydatatransform = os.path.join(cli_dir, "polydatatransform")
+    lm_ped = "/work/dprince/Multiclass/Landmarks/landmarks_32pts_afprop.fcsv"
+    tmp_dir = os.path.join(currentPath, "tmp_dir_lm_preprocess")
 
-      #TO CHANGE: LOCATION OF CLI AND VARIABLES
-      #
-      cli_dir = os.path.join(currentPath, "..","CLI")
-      polydatatransform = os.path.join(cli_dir, "cli-build","polydatatransform","bin","polydatatransform")
-      lm_ped = "/work/dprince/Multiclass/Landmarks/landmarks_32pts_afprop.fcsv"
-      tmp_dir = os.path.join(currentPath, "tmp_dir_lm_preprocess")
+    logging.info('Preprocessing started')
+    new_lm_path = os.path.join(tmp_dir, "lm_prepocess.fcsv")
+    if not os.path.isdir(tmp_dir):
+    os.makedirs(tmp_dir)
 
-      logging.info('Preprocessing started')
-      new_lm_path = os.path.join(tmp_dir, "lm_prepocess.fcsv")
-      if not os.path.isdir(tmp_dir):
-        os.makedirs(tmp_dir)
+    logging.info('Polydata transform')
+    cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_path, "-o", new_lm_path]
+    out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    # print("\nout : " + str(out))
+    if err != "":
+    print("\nerr : " + str(err))
+    logging.info('Make Dataset')
+    run_make_dataset(input_dir, output_dir, new_lm_path, landmarksOn=True)
+    rmtree(tmp_dir)
+    logging.info('Preprocessing completed')
 
-      logging.info('Polydata transform')
-      cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_path, "-o", new_lm_path]
-      out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-      # print("\nout : " + str(out))
-      if err != "":
-        print("\nerr : " + str(err))
-      logging.info('Make Dataset')
-      run_make_dataset(input_dir, output_dir, new_lm_path, landmarksOn=True)
-      rmtree(tmp_dir)
-      logging.info('Preprocessing completed')
-
-      return
+    return
 
   def runStoreAndTrain(self, data_dir, model_dir, lr, num_epochs, sum_dir):
+    runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2")
     pipeline_train_py = os.path.join(TRAFIC_LIB_DIR, "PipelineTrain.py")
@@ -784,11 +779,11 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     return
 
   def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path):
-
+    runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
-    env_dir = os.path.join(currentPath, "..", "miniconda2")
-    cli_dir = os.path.join(currentPath, "..","CLI")
-    polydatatransform = os.path.join(cli_dir, "cli-build","polydatatransform","bin","polydatatransform")
+    env_dir = os.path.join(currentPath, "..", "..", "miniconda2")
+    cli_dir = os.path.join(currentPath, "..", "..","cli-modules")
+    polydatatransform = os.path.join(cli_dir, "polydatatransform")
     lm_ped = "/work/dprince/Multiclass/Landmarks/landmarks_32pts_afprop.fcsv"
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
@@ -821,6 +816,8 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     # logging.info('Processing completed')
 
     # return True
+
+    
 
 
 class TraficMultiTest(ScriptedLoadableModuleTest):

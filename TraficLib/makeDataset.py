@@ -53,12 +53,12 @@ def run_make_dataset(input_folder, output_folder, landmark_file="", num_landmark
 
 def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, num_landmarks=5, model_fiber="", lmOn=True, torsOn=True, curvOn=True, classification=False):
     currentPath = os.path.dirname(os.path.abspath(__file__))
-    CLI_DIR = os.path.join(currentPath, "..","CLI")
+    CLI_DIR = os.path.join(currentPath, "..","..","cli-modules")
 
-    env_dir = os.path.join(currentPath, "..", "miniconda2")
+    env_dir = os.path.join(currentPath, "..","..", "miniconda2")
     prefix_cli = os.path.join(env_dir,"envs","env_trafic","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
-    fibersampling = os.path.join(CLI_DIR, "cli-build" ,"fibersampling","bin","fibersampling")
-    fiberfeaturescreator = os.path.join(CLI_DIR, "cli-build" ,"fiberfeaturescreator","bin","fiberfeaturescreator")
+    fibersampling = os.path.join(CLI_DIR, "fibersampling")
+    fiberfeaturescreator = os.path.join(CLI_DIR, "fiberfeaturescreator")
     if classification:
         cmd_sampling = [prefix_cli, fibersampling,"--input", check_file(input_fiber), "--output",
                  check_path(output_fiber, True), "-N", str(num_points)]

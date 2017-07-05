@@ -11,6 +11,7 @@ TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "
 sys.path.append(TRAFIC_LIB_DIR)
 print path.join(TRAFIC_LIB_DIR)
 from makeDataset import run_make_dataset
+from envInstallTF import runMaybeEnvInstallTF
 # print runPreprocess
 import logging
 
@@ -30,16 +31,12 @@ class TraficBi(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "TraficBi" # TODO make this more human readable by adding spaces
-    self.parent.categories = ["Examples"]
+    self.parent.categories = ["Classification"]
     self.parent.dependencies = []
-    self.parent.contributors = ["John Doe (AnyWare Corp.)"] # replace with "Firstname Lastname (Organization)"
+    self.parent.contributors = ["Prince Ngattai Lam (UNC-NIRAL)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
-    This is an example of scripted loadable module bundled in an extension.
-    It performs a simple thresholding on the input volume and optionally captures a screenshot.
     """
     self.parent.acknowledgementText = """
-    This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
-    and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
 """ # replace with organization, grant and thanks.
 
 #
@@ -771,8 +768,8 @@ class TraficBiLogic(ScriptedLoadableModuleLogic):
       #TO CHANGE: LOCATION OF CLI AND VARIABLES
       #
       currentPath = os.path.dirname(os.path.abspath(__file__))
-      cli_dir = os.path.join(currentPath, "..","CLI")
-      polydatatransform = os.path.join(cli_dir, "cli-build","polydatatransform","bin","polydatatransform") 
+      cli_dir = os.path.join(currentPath,"..", "..","cli-modules")
+      polydatatransform = os.path.join(cli_dir, "polydatatransform") 
       # lm_ped = "/work/dprince/PED/LandmarksPed/Arc_L_FT_bundle_clean_landmarks.fcsv"
       tmp_dir = os.path.join(currentPath, "tmp_dir_lm_preprocess")
 
@@ -810,8 +807,9 @@ class TraficBiLogic(ScriptedLoadableModuleLogic):
       return
 
   def runStoreAndTrain(self, data_dir, model_dir, lr, num_epochs, sum_dir):
+    runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
-    env_dir = os.path.join(currentPath, "..", "miniconda2")
+    env_dir = os.path.join(currentPath,"..", "..", "miniconda2")
     pipeline_train_py = os.path.join(TRAFIC_LIB_DIR, "PipelineTrain.py")
     cmd_py = str(pipeline_train_py) + ' --data_dir ' + str(data_dir) + ' --biclass --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --lr ' + str(lr) + ' --num_epochs ' + str(num_epochs)
     cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
@@ -830,11 +828,11 @@ class TraficBiLogic(ScriptedLoadableModuleLogic):
     return
 
   def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path, name_fiber):
-
+    runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
-    env_dir = os.path.join(currentPath, "..", "miniconda2")
-    cli_dir = os.path.join(currentPath, "..","CLI")
-    polydatatransform = os.path.join(cli_dir, "cli-build","polydatatransform","bin","polydatatransform")
+    env_dir = os.path.join(currentPath,"..", "..", "miniconda2")
+    cli_dir = os.path.join(currentPath,"..", "..","cli-modules")
+    polydatatransform = os.path.join(cli_dir, "polydatatransform") 
     lm_ped = os.path.join(currentPath, "Resources", "Landmarks", name_fiber + "_bundle_clean_landmarks.fcsv")
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
