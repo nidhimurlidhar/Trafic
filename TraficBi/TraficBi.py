@@ -808,7 +808,9 @@ class TraficBiLogic(ScriptedLoadableModuleLogic):
       return
 
   def runStoreAndTrain(self, data_dir, model_dir, lr, num_epochs, sum_dir):
+    print "Before"
     runMaybeEnvInstallTF()
+    print "After"
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2")
     pipeline_train_py = os.path.join(TRAFIC_LIB_DIR, "PipelineTrain.py")
@@ -822,8 +824,11 @@ class TraficBiLogic(ScriptedLoadableModuleLogic):
     cmd_pipeline_train = cmd_virtenv + str(cmd_py) + ';'
     print(cmd_pipeline_train)
     cmd = ["bash", "-c", str(cmd_pipeline_train)]
-    out = open(os.path.join(TRAFIC_LIB_DIR,"Logs","training_out.txt"), "wb")
-    err = open(os.path.join(TRAFIC_LIB_DIR,"Logs","training_err.txt"), "wb")
+    log_dir = os.path.join(sum_dir,"Logs")
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+    out = open(os.path.join(log_dir,"training_out.txt"), "wb")
+    err = open(os.path.join(log_dir,"training_err.txt"), "wb")
     subprocess.Popen(cmd, stdout=out, stderr=err)
     # print("\nout : " + str(out) + "\nerr : " + str(err))
     return
@@ -854,8 +859,11 @@ class TraficBiLogic(ScriptedLoadableModuleLogic):
     cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
     print(cmd_pipeline_class)
     cmd = ["bash", "-c", str(cmd_pipeline_class)]
-    out = open(os.path.join(TRAFIC_LIB_DIR,"Logs","classification_out.txt"), "wb")
-    err = open(os.path.join(TRAFIC_LIB_DIR,"Logs","classification_err.txt"), "wb")
+    log_dir = os.path.join(sum_dir,"Logs")
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+    out = open(os.path.join(log_dir,"training_out.txt"), "wb")
+    err = open(os.path.join(log_dir,"training_err.txt"), "wb")
     _, _ = subprocess.Popen(cmd, stdout=out, stderr=err).communicate()
     # print("\nout : " + str(out) + "\nerr : " + str(err))
     rmtree(tmp_dir)
