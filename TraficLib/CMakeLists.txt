@@ -4,7 +4,6 @@ set(MODULE_NAME TraficLib)
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   envInstallTF.py
-  envTensorFlow.py
   fiberfileIO.py
   makeDataset.py
   networkDef.py

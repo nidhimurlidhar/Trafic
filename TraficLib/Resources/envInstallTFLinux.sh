@@ -59,7 +59,14 @@ envInstall () {
 	echo "===> Conda installed"
 
 	# We add the path of
+
+	if [ $py_v == '2' ];then
+		PY_V='2.7'
+
+	if [ $py_v == '3' ];then
+		PY_V='3.6'
 	export PATH=$TRAFIC_DIR'/miniconda2/bin/':$PATH
+	export PYTHONPATH=$TRAFIC_DIR'/miniconda2/lib/':$TRAFIC_DIR'/miniconda2/lib/python'$PY_V'/site-packages/':$PYTHONPATH
 
 	echo "II. Create environment to run tensorflow"
 	conda create -y -n env_trafic python=$PY_VERSION
