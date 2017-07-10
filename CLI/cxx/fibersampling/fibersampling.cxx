@@ -1,5 +1,5 @@
 #include "fibersampling.h"
-#include "../utils/fiberfileIO.hxx"
+#include "fiberfileIO.hxx"
 #include "fibersamplingCLP.h"
 #define E(X) ((int)X)  //We define the integer part of a variable X
 

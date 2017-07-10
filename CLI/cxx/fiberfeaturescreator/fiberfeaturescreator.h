@@ -15,7 +15,7 @@
 #include <vtkFloatArray.h>
 #include <vtkCellArray.h>
 #include <vtkPointData.h>
-#include "../utils/fiberfileIO.h"
+#include "fiberfileIO.h"
 #include "itkImageFileReader.h"
 
 /**

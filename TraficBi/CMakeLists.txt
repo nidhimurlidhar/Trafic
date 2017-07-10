@@ -62,13 +62,15 @@ set(MODULE_PYTHON_RESOURCES
   Resources/Landmarks/UNC_R_bundle_clean_landmarks.fcsv
   )
 
-#-----------------------------------------------------------------------------
-slicerMacroBuildScriptedModule(
-  NAME ${MODULE_NAME}
-  SCRIPTS ${MODULE_PYTHON_SCRIPTS}
-  RESOURCES ${MODULE_PYTHON_RESOURCES}
-  WITH_GENERIC_TESTS
-  )
+if(${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
+  #-----------------------------------------------------------------------------
+  slicerMacroBuildScriptedModule(
+    NAME ${MODULE_NAME}
+    SCRIPTS ${MODULE_PYTHON_SCRIPTS}
+    RESOURCES ${MODULE_PYTHON_RESOURCES}
+    WITH_GENERIC_TESTS
+    )
+endif()
 
 #-----------------------------------------------------------------------------
 if(BUILD_TESTING)
