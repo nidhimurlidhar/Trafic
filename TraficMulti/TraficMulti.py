@@ -787,7 +787,7 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     env_dir = os.path.join(currentPath, "..", "miniconda2")
     cli_dir = os.path.join(currentPath, "..","cli-modules")
     polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    lm_ped = s.path.join(currentPath,"Resources", "landmarks_32pts_afprop.fcsv")
+    lm_ped = os.path.join(currentPath,"Resources", "landmarks_32pts_afprop.fcsv")
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
       os.makedirs(tmp_dir)
