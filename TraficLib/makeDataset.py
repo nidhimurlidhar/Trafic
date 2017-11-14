@@ -74,12 +74,12 @@ def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, 
 
     if classification:
         cmd_ffc = [prefix_cli, fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
-                     check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file,
-                     "--model", model_fiber]
+                     check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file]
     else:
         cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
-                     check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file,
-                     "--model", model_fiber]
+                     check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file]
+    if model_fiber != '':
+        cmd_ffc.append("--model", model_fiber)
     if lmOn:
         cmd_ffc.append("--landmarks")
     if torsOn:
