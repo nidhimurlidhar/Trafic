@@ -87,3 +87,4 @@ def fiber_extract_feature(fiber_file, lmOn, curveOn, torsOn, num_landmarks, num_
         else:
             labels.append(label+":"+str(k))
 
+    return dataset, labels
