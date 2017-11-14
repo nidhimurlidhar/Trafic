@@ -55,7 +55,7 @@ def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, 
     currentPath = os.path.dirname(os.path.abspath(__file__))
     CLI_DIR = os.path.join(currentPath, "..","..","cli-modules")
 
-    env_dir = os.path.join(currentPath, "..","..", "miniconda2")
+    env_dir = os.path.join(currentPath, "..", "miniconda2")
     prefix_cli = os.path.join(env_dir,"envs","env_trafic","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
     fibersampling = os.path.join(CLI_DIR, "fibersampling")
     fiberfeaturescreator = os.path.join(CLI_DIR, "fiberfeaturescreator")
