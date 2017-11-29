@@ -770,6 +770,11 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     cmd_virtenv = cmd_virtenv + 'source activate env_trafic;'
     cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
     cmd_pipeline_train = cmd_virtenv + str(cmd_py) + ';'
+
+
+    if not os.path.exists("tmp_dir_lm_class"):
+        os.makedirs("tmp_dir_lm_class")
+
     print(cmd_pipeline_train)
     cmd = ["bash", "-c", str(cmd_pipeline_train)]
     log_dir = os.path.join(sum_dir,"Logs")
@@ -786,14 +791,17 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2")
     cli_dir = os.path.join(currentPath, "..","cli-modules")
-    polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    lm_ped = os.path.join(currentPath,"Resources", "landmarks_32pts_afprop.fcsv")
+
+    # polydatatransform = os.path.join(cli_dir, "polydatatransform")
+    polydatatransform = "/work/boucaud/builds/niral_utilities/bin/polydatatransform"
+    lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv") ###CHANGED HERE
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
       os.makedirs(tmp_dir)
     new_lm_path = os.path.join(tmp_dir, "lm_class.fcsv")
 
     cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_Path, "-o", new_lm_path]
+    print(cmd_polydatatransform)
     out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     print("\nout : " + str(out))
 
@@ -805,7 +813,7 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     cmd_virtenv = cmd_virtenv + 'source activate env_trafic;'
     cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
     cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
-    print(cmd_pipeline_class)
+    print(str(cmd_pipeline_class))
     cmd = ["bash", "-c", str(cmd_pipeline_class)]
     log_dir = os.path.join(sum_dir,"Logs")
     if not os.path.isdir(log_dir):
