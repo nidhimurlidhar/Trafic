@@ -62,9 +62,12 @@ envInstall () {
 
 	if [ $py_v == '2' ];then
 		PY_V='2.7'
+	fi
 
 	if [ $py_v == '3' ];then
 		PY_V='3.6'
+	fi
+
 	export PATH=$TRAFIC_DIR'/miniconda2/bin/':$PATH
 	export PYTHONPATH=$TRAFIC_DIR'/miniconda2/lib/':$TRAFIC_DIR'/miniconda2/lib/python'$PY_V'/site-packages/':$PYTHONPATH
 
