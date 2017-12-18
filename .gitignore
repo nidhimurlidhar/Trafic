@@ -1,7 +1,6 @@
 *.pyc
-libc6_2.17-0ubuntu5_amd64.deb libc6-dev_2.17-0ubuntu5_amd64.deb
 miniconda2
-libc6-dev_2.17-0ubuntu5_amd64.deb 
-libc6_2.17-0ubuntu5_amd64.deb 
-Miniconda2-latest-Linux-x86_64.sh 
+*.deb
+libc6*
+Miniconda2-latest-Linux-x86_64.sh
 bin/
