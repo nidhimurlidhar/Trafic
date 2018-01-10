@@ -48,14 +48,14 @@ envInstall () {
 
 	# Get the bash installer for linux 64bit python 2.7
 	echo "I. Conda installation"
-	if [ -f Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh ]; then
+	if [ -f /tmp/Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh ]; then
 		echo "Skipping Downloading of Miniconda installer exists already"
 	else
 		echo "Download Miniconda installer"
-		curl https://repo.continuum.io/miniconda/Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh --output Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh
+		curl https://repo.continuum.io/miniconda/Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh --output /tmp/Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh
 	fi
 	# We install miniconda
-	bash Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh -b -p $TRAFIC_DIR'/miniconda2/'
+	bash /tmp/Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh -b -p $TRAFIC_DIR'/miniconda2/'
 	echo "===> Conda installed"
 
 	# We add the path of
@@ -81,15 +81,15 @@ envInstall () {
 	conda install -y -c anaconda vtk
 	touch $TRAFIC_DIR'/miniconda2/envs/env_trafic/lib/python2.7/site-packages/google/__init__.py'
 
-	if [ -f libc6_2.17-0ubuntu5_amd64.deb ]; then
+	if [ -f /tmp/libc6_2.17-0ubuntu5_amd64.deb ]; then
 		echo "Skipping Downloading of libc6_2.17-0ubuntu5_amd64.deb exists already"
 	else
-		curl http://launchpadlibrarian.net/137699828/libc6_2.17-0ubuntu5_amd64.deb --output libc6_2.17-0ubuntu5_amd64.deb
+		curl http://launchpadlibrarian.net/137699828/libc6_2.17-0ubuntu5_amd64.deb --output /tmp/libc6_2.17-0ubuntu5_amd64.deb
 	fi
-	if [ -f libc6-dev_2.17-0ubuntu5_amd64.deb ]; then
+	if [ -f /tmp/libc6-dev_2.17-0ubuntu5_amd64.deb ]; then
 		echo "Skipping Downloading of libc6-dev_2.17-0ubuntu5_amd64.deb exists already"
 	else
-		curl http://launchpadlibrarian.net/137699829/libc6-dev_2.17-0ubuntu5_amd64.deb --output libc6-dev_2.17-0ubuntu5_amd64.deb
+		curl http://launchpadlibrarian.net/137699829/libc6-dev_2.17-0ubuntu5_amd64.deb --output /tmp/libc6-dev_2.17-0ubuntu5_amd64.deb
 	fi
 
 	cd $TRAFIC_DIR'/miniconda2/envs/env_trafic/lib/'
@@ -98,8 +98,8 @@ envInstall () {
 	ar p /tmp/libc6_2.17-0ubuntu5_amd64.deb data.tar.gz | tar zx
 	ar p /tmp/libc6-dev_2.17-0ubuntu5_amd64.deb data.tar.gz | tar zx
 	rm Miniconda"$py_v"-latest-Linux-x86"$n_bit".sh
-	rm libc6_2.17-0ubuntu5_amd64.deb
-	rm libc6-dev_2.17-0ubuntu5_amd64.deb
+	rm /tmp/libc6_2.17-0ubuntu5_amd64.deb
+	rm /tmp/libc6-dev_2.17-0ubuntu5_amd64.deb
 	source deactivate env_trafic
 	echo "===> tensorflow and libraries installed"
 }
