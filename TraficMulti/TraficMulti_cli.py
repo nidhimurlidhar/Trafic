@@ -27,7 +27,7 @@ class TraficMultiLogic():
     runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
-    cli_dir = os.path.join(currentPath, "..","cli-modules")
+    cli_dir = os.path.join(currentPath, "..","..","cli-modules")
 
     polydatatransform = os.path.join(cli_dir, "polydatatransform")
     lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
