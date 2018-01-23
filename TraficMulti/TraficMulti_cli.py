@@ -29,8 +29,7 @@ class TraficMultiLogic():
     env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
     cli_dir = os.path.join(currentPath, "..","cli-modules")
 
-    # polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    polydatatransform = "/builds/niral_utilities_build/bin/polydatatransform" #currently set for docker install, needs to be conffigurable in the future, or polydatatransform copied/linked to ../cli-modules
+    polydatatransform = os.path.join(cli_dir, "polydatatransform")
     lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):

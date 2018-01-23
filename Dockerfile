@@ -47,5 +47,8 @@ RUN export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/builds/niral_utilities_build
 RUN cp /utils/niral_utilities/niral_utilitiesConfig.cmake.in /builds/niral_utilities_build/niral_utilitiesConfig.cmake
 RUN cmake /Trafic -DUSE_SYSTEM_VTK:BOOL=TRUE  -DUSE_SYSTEM_ITK:BOOL=TRUE  -DUSE_SYSTEM_SlicerExecutionModel:BOOL=TRUE  -DUSE_SYSTEM_niral_utilities:BOOL=TRUE -DVTK_DIR:PATH=/builds/VTK_build -DITK_DIR:PATH=/builds/ITK_build -Dniral_utilities_DIR:PATH=/builds/niral_utilities_build -DSlicerExecutionModel_DIR:PATH=/builds/SEM_build && make -j12
 
+
+# copy all cli tools used by trafic in the cli-modules directory
 RUN mkdir /cli-modules
 RUN cp /builds/trafic_build/Trafic-build/CLI/cxx/fiber*/bin/* /cli-modules
+RUN ln -s /builds/niral_utilities_build/bin/polydatatransform /cli-modules/polydatatransform
