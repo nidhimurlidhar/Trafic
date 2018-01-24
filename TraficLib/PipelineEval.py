@@ -42,7 +42,6 @@ def run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summ
   store_py = os.path.join(currentPath, 'runStore.py')
   classification_py = os.path.join(currentPath, 'runClassification.py')
   env_dir = os.path.join(currentPath, "miniconda2")
-  prefix = os.path.join(env_dir,"envs","env_trafic","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
   pythonPath = os.path.join(env_dir,"bin","python")
 
   src_dir = os.path.dirname(data_file)

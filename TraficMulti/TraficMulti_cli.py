@@ -27,10 +27,9 @@ class TraficMultiLogic():
     runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
-    cli_dir = os.path.join(currentPath, "..","cli-modules")
+    cli_dir = os.path.join(currentPath, "..","..","cli-modules")
 
-    # polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    polydatatransform = "/builds/niral_utilities_build/bin/polydatatransform" #currently set for docker install, needs to be conffigurable in the future, or polydatatransform copied/linked to ../cli-modules
+    polydatatransform = os.path.join(cli_dir, "polydatatransform")
     lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
@@ -48,7 +47,7 @@ class TraficMultiLogic():
     cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_trafic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
     cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
     cmd_virtenv = cmd_virtenv + 'source activate env_trafic;'
-    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+    cmd_virtenv = cmd_virtenv + ' `which python` '
     cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
     print(str(cmd_pipeline_class))
     cmd = ["bash", "-c", str(cmd_pipeline_class)]
@@ -60,7 +59,7 @@ class TraficMultiLogic():
     proc = subprocess.Popen(cmd, stdout=out, stderr=err)
     proc.wait()
     print("\nout : " + str(out) + "\nerr : " + str(err))    
-    rmtree(tmp_dir)
+    #rmtree(tmp_dir)
     return
 
 def main():

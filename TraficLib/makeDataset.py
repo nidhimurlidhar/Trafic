@@ -56,11 +56,10 @@ def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, 
     CLI_DIR = os.path.join(currentPath, "..","..","cli-modules")
 
     env_dir = os.path.join(currentPath, "..", "miniconda2")
-    prefix_cli = os.path.join(env_dir,"envs","env_trafic","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
     fibersampling = os.path.join(CLI_DIR, "fibersampling")
     fiberfeaturescreator = os.path.join(CLI_DIR, "fiberfeaturescreator")
     if classification:
-        cmd_sampling = [prefix_cli, fibersampling,"--input", check_file(input_fiber), "--output",
+        cmd_sampling = [fibersampling,"--input", check_file(input_fiber), "--output",
                  check_path(output_fiber, True), "-N", str(num_points)]
     else:
         cmd_sampling = [fibersampling,"--input", check_file(input_fiber), "--output",
@@ -73,7 +72,7 @@ def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, 
         print("\nerr : " + str(err))
 
     if classification:
-        cmd_ffc = [prefix_cli, fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
+        cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
                      check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file]
     else:
         cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",

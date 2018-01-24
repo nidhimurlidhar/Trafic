@@ -768,7 +768,7 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     # cmd_virtenv = cmd_virtenv + 'export PYTHONHOME=$ENV_DIR/bin/:$PYTHONHOME;'
     cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
     cmd_virtenv = cmd_virtenv + 'source activate env_trafic;'
-    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+    cmd_virtenv = cmd_virtenv + ' `which python` '
     cmd_pipeline_train = cmd_virtenv + str(cmd_py) + ';'
 
 
@@ -811,7 +811,7 @@ class TraficMultiLogic(ScriptedLoadableModuleLogic):
     cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_trafic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
     cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
     cmd_virtenv = cmd_virtenv + 'source activate env_trafic;'
-    cmd_virtenv = cmd_virtenv + 'LD_LIBRARY_PATH=$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/:$ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH $ENV_DIR/envs/env_trafic/lib/libc6_2.17/lib/x86_64-linux-gnu/ld-2.17.so `which python` '
+    cmd_virtenv = cmd_virtenv + ' `which python` '
     cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
     print(str(cmd_pipeline_class))
     cmd = ["bash", "-c", str(cmd_pipeline_class)]
