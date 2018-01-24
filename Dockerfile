@@ -3,7 +3,7 @@ FROM tensorflow/tensorflow
 WORKDIR "/"
 
 ## install git and cmake
-RUN apt-get update && apt-get install -y --no-install-recommends git cmake
+RUN apt-get update && apt-get install -y --no-install-recommends git cmake libgl1-mesa-glx
 
 ## clone trafic
 RUN git clone https://github.com/Adbook/Trafic.git #TODO: change from fork
@@ -26,6 +26,8 @@ RUN git clone https://gitlab.kitware.com/vtk/vtk.git
 
 WORKDIR "/utils/vtk"
 RUN git checkout tags/v6.3.0
+WORKDIR "/utils/ITK"
+RUN git checkout tags/v4.12.2
 
 WORKDIR "/builds"
 RUN mkdir ITK_build VTK_build niral_utilities_build trafic_build SEM_build

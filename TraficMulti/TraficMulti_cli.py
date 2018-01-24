@@ -59,7 +59,7 @@ class TraficMultiLogic():
     proc = subprocess.Popen(cmd, stdout=out, stderr=err)
     proc.wait()
     print("\nout : " + str(out) + "\nerr : " + str(err))    
-    rmtree(tmp_dir)
+    #rmtree(tmp_dir)
     return
 
 def main():
