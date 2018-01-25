@@ -24,10 +24,6 @@ parser.add_argument('--checkpoint_dir', action='store', dest='checkpoint_dir', h
                     default="/root/work/DeepLearning/Project/Data/CKPT/model3.ckpt")
 parser.add_argument('--landmark_file', action='store', dest='landmark_file', help='Landmarks File (.vt[k/p], or .fcsv)',
                     default="")
-parser.add_argument('--multiclass', action='store_true', dest='multiclass', help='Enable the multiclassification training',
-                    default=False)
-parser.add_argument('--biclass', action='store_true', dest='biclass', help='Enable the biclassification training',
-                    default=False)
 parser.add_argument('--summary_dir', action='store', dest='summary_dir', help='Summary directory ',
                     default="")
 parser.add_argument('--fiber_name', action='store', dest='fiber_name', help='Name of the fiber for the biclassification case ',
@@ -66,7 +62,7 @@ def run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summ
     multi=False
   elif num_landmarks==32:
     multi=True
-  run_classification(tmp_dir, output_dir, checkpoint_dir, summary_dir, fiber_name=fiber_name, multiclass=multi)
+  run_classification(tmp_dir, output_dir, checkpoint_dir, summary_dir, fiber_name=fiber_name)
   # cmd_class = [prefix, pythonPath, classification_py, "--data_dir",tmp_dir,"--output_dir",output_dir,"--checkpoint_dir",checkpoint_dir,"--summary_dir",summary_dir, "--fiber_name", fiber_name]
   # if num_landmarks == 32:
     # cmd_class.append("--multiclass")
@@ -81,14 +77,10 @@ def main():
   data_file = args.data_file
   checkpoint_dir = args.checkpoint_dir
   landmark_file = args.landmark_file
-  multiclass = args.multiclass
-  biclass = args.biclass
   summary_dir = args.summary_dir
   fiber_name = args.fiber_name
-  if multiclass:
-    run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summary_dir, 32, fiber_name)
-  elif biclass:
-    run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summary_dir, 5, fiber_name)
+
+  run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summary_dir, 32, fiber_name)
 
 
 if __name__ == '__main__':

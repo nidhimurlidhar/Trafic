@@ -20,8 +20,6 @@ flags.DEFINE_string('checkpoint_dir', '',
                     """Directory where to write model checkpoints.""")
 flags.DEFINE_string('summary_dir', '',
                     """Directory where to write summary.""")
-flags.DEFINE_boolean('multiclass', False,
-                         """Whether Multiclassification or Biclassification.""")
 
 
 # def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.001, batch_size=5, num_hidden=1024, multiclass=False):
@@ -124,12 +122,9 @@ flags.DEFINE_boolean('multiclass', False,
 #         sess.close()
 
 
-def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.001, batch_size=5, num_hidden=1024, multiclass=False):
+def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.001, batch_size=5, num_hidden=1024):
     
-    if multiclass:
-      num_classes = 54
-    else:
-      num_classes = 2
+    num_classes = 54
 
     # construct the graph
     with tf.Graph().as_default():
@@ -227,7 +222,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
 def main(_):
     start = time.time()
-    run_training(FLAGS.data_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.num_hidden, FLAGS.multiclass)
+    run_training(FLAGS.data_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.num_hidden)
     end = time.time()
     print "Training Process took %dh%02dm%02ds" % (convert_time(end - start))
 

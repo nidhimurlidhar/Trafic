@@ -20,10 +20,8 @@ flags.DEFINE_string('summary_dir', '/root/work/SaveTest/',
                     """Directory where to write model checkpoints.""")
 flags.DEFINE_boolean('conv', False,
                          """Whether use conv version or no Conv.""")
-flags.DEFINE_boolean('multiclass', False,
-                         """Whether Multiclassification or Biclassification.""")
 flags.DEFINE_string('fiber_name', "Fiber",
-                         """In biclassification permit to know the name of the fiber to extract (By default: fiber_name = 'Fiber' which gives Fiber_extracted.vtk)""")
+                         """To know the name of the fiber to extract (By default: fiber_name = 'Fiber' which gives Fiber_extracted.vtk)""")
 
 
 name_labels = [ '0', 'Arc_L_FT', 'Arc_L_FrontoParietal', 'Arc_L_TemporoParietal',  'Arc_R_FT', 'Arc_R_FrontoParietal', 'Arc_R_TemporoParietal',  'CGC_L',  'CGC_R',
@@ -68,7 +66,7 @@ def reformat_prediction(predictions, num_classes):
             dict_pred[key][num_class].InsertNextValue(value)
     return dict_pred
 
-def classification(dict, output_dir, num_classes, multiclass, fiber_name):
+def classification(dict, output_dir, num_classes, fiber_name):
     # input: predictions    - prediction of the data to classify, size [num_fibers]x[num_labels]
     # input: name_labels    - containing the name of all the labels (classes)
     # input: test_names     - containing the name and index of each fibers
@@ -93,20 +91,14 @@ def classification(dict, output_dir, num_classes, multiclass, fiber_name):
                 append_list[num_class].AddInput(extract_fiber(bundle_fiber, dict[fiber][num_class+1]))
     for num_class in xrange(num_classes-1):
         append_list[num_class].Update()
-        if multiclass:
-          write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class+1]+'_extracted.vtk')
-        else:
-          write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+fiber_name+'_extracted.vtk')
+        write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class+1]+'_extracted.vtk')
         print ""
 
     # run_classification(num_hidden, data_dir, output_dir, checkpoint_dir, summary_dir, conv, multiclass)
 
-def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hidden=1024,  fiber_name="Fiber", conv=False, multiclass=False):
+def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hidden=1024,  fiber_name="Fiber", conv=False):
     # Run evaluation on the input data set
-    if multiclass:
-      num_classes = 54
-    else:
-      num_classes = 2
+    num_classes = 54
     start = time.time()
     with tf.Graph().as_default() as g:
 
@@ -193,14 +185,14 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
         sess.close()
         # print "prediction\n", prediction
         pred_dictionnary = reformat_prediction(prediction, num_classes)
-        classification(pred_dictionnary, output_dir, num_classes, multiclass, fiber_name)
+        classification(pred_dictionnary, output_dir, num_classes, fiber_name)
     end = time.time()
 
 
 
 def main(_):
     start = time.time()
-    run_classification(FLAGS.data_dir, FLAGS.output_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_hidden,  FLAGS.fiber_name, FLAGS.conv, FLAGS.multiclass)
+    run_classification(FLAGS.data_dir, FLAGS.output_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_hidden,  FLAGS.fiber_name, FLAGS.conv)
     end = time.time()
     print YELLOW, "Classification Process took %dh%02dm%02ds" % (convert_time(end - start)), NC
 
