@@ -14,6 +14,13 @@ RUN ls /Trafic
 RUN bash /Trafic/TraficLib/Resources/envInstallTFLinux.sh /Trafic 2.7 64
 
 RUN bash /Trafic/setup_docker.sh
+RUN /Trafic/miniconda2/bin/conda install -y libglu
+RUN /Trafic/miniconda2/bin/conda install -y libsm-cos6-x86_64
+RUN ln -s /Trafic/miniconda2/envs/env_trafic/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib64/libSM.so.6 /Trafic/miniconda2/envs/env_trafic/lib/libSM.so.6
+RUN /Trafic/miniconda2/bin/conda install -y libice-cos6-x86_64
+RUN ln -s /Trafic/miniconda2/envs/env_trafic/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib64/libICE.so.6 /Trafic/miniconda2/envs/env_trafic/lib/libICE.so.6
+RUN /Trafic/miniconda2/bin/conda install -y libXt-cos6-x86_64
+RUN ln -s /Trafic/miniconda2/envs/env_trafic/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib64/libXt.so.6 /Trafic/miniconda2/envs/env_trafic/lib/libXt.so.6
 
 ## build bin utilities
 RUN mkdir /builds /utils
