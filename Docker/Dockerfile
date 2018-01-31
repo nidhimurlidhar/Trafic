@@ -1,4 +1,5 @@
-FROM tensorflow/tensorflow
+#FROM tensorflow/tensorflow
+FROM gcr.io/tensorflow/tensorflow:latest-devel-gpu
 
 WORKDIR "/"
 
@@ -13,7 +14,7 @@ RUN ls /Trafic
 ## install dependencies and setup the environment
 RUN bash /Trafic/TraficLib/Resources/envInstallTFLinux.sh /Trafic 2.7 64
 
-RUN bash /Trafic/setup_docker.sh
+RUN bash /Trafic/Docker/setup_docker.sh
 RUN /Trafic/miniconda2/bin/conda install -y libglu
 RUN /Trafic/miniconda2/bin/conda install -y libsm-cos6-x86_64
 RUN ln -s /Trafic/miniconda2/envs/env_trafic/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib64/libSM.so.6 /Trafic/miniconda2/envs/env_trafic/lib/libSM.so.6
