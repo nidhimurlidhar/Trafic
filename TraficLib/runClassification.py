@@ -20,10 +20,8 @@ flags.DEFINE_string('summary_dir', '/root/work/SaveTest/',
                     """Directory where to write model checkpoints.""")
 flags.DEFINE_boolean('conv', False,
                          """Whether use conv version or no Conv.""")
-flags.DEFINE_boolean('multiclass', False,
-                         """Whether Multiclassification or Biclassification.""")
 flags.DEFINE_string('fiber_name', "Fiber",
-                         """In biclassification permit to know the name of the fiber to extract (By default: fiber_name = 'Fiber' which gives Fiber_extracted.vtk)""")
+                         """To know the name of the fiber to extract (By default: fiber_name = 'Fiber' which gives Fiber_extracted.vtk)""")
 
 
 name_labels = [ '0', 'Arc_L_FT', 'Arc_L_FrontoParietal', 'Arc_L_TemporoParietal',  'Arc_R_FT', 'Arc_R_FrontoParietal', 'Arc_R_TemporoParietal',  'CGC_L',  'CGC_R',
@@ -59,17 +57,21 @@ def reformat_prediction(predictions, num_classes):
     for i in range(num_classes):
         vector_id_blank.append(vtk.vtkIdTypeArray())
     dict_pred = {}
-    for num_class in range(num_classes):
-        for num_fib in range(len(predictions[num_class])):
-            key, value = fibername_split(predictions[num_class][num_fib])
+    for pred_class, indexes in predictions.iteritems():
+        if int(pred_class) > num_classes +1 or int(pred_class) < 0:
+            continue
+        if pred_class not in dict_pred.keys():
+            dict_pred[pred_class] = vtk.vtkIdTypeArray()
+        for index in indexes:
+            dict_pred[pred_class].InsertNextValue(index)
 
-            if key not in dict_pred.keys():
-                dict_pred[key] = vector_id_blank
-            dict_pred[key][num_class].InsertNextValue(value)
+
+
+
     return dict_pred
 
-def classification(dict, output_dir, num_classes, multiclass, fiber_name):
-    # input: predictions    - prediction of the data to classify, size [num_fibers]x[num_labels]
+def classification(dict, output_dir, num_classes, fiber_name):
+    # input: predictions    - prediction of the data to classify, dictionary where key=predicted class and value = array of indexes
     # input: name_labels    - containing the name of all the labels (classes)
     # input: test_names     - containing the name and index of each fibers
     # output: No output but at the end of this function, we write the positives fibers in one vtk file for each class
@@ -80,33 +82,33 @@ def classification(dict, output_dir, num_classes, multiclass, fiber_name):
     if not os.path.exists(os.path.dirname(output_dir)):
         os.makedirs(output_dir)
     append_list = np.ndarray(shape=num_classes, dtype=np.object)
-    for i in xrange(num_classes-1):
+    for i in xrange(num_classes):
         append_list[i] = vtk.vtkAppendPolyData()
 
     bundle_fiber = vtk.vtkPolyData()
-    for fiber in dict.keys():
-        bundle_fiber = read_vtk_data(fiber)
-        for num_class in xrange(num_classes-1):
-            if vtk.VTK_MAJOR_VERSION > 5:
-                append_list[num_class].AddInputData(extract_fiber(bundle_fiber, dict[fiber][num_class+1]))
-            else:
-                append_list[num_class].AddInput(extract_fiber(bundle_fiber, dict[fiber][num_class+1]))
-    for num_class in xrange(num_classes-1):
-        append_list[num_class].Update()
-        if multiclass:
-          write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class+1]+'_extracted.vtk')
+
+    bundle_fiber = read_vtk_data(fiber_name)
+    
+    print dict.keys()
+    for pred_class in dict.keys():
+        if vtk.VTK_MAJOR_VERSION > 5:
+            append_list[pred_class].AddInputData(extract_fiber(bundle_fiber, dict[pred_class]))
         else:
-          write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+fiber_name+'_extracted.vtk')
+            append_list[pred_class].AddInput(extract_fiber(bundle_fiber, dict[pred_class]))
+
+    for num_class in xrange(num_classes-1):
+        if append_list[num_class].GetInput() is None: # or num_class == 0: #if the vtk file would be empty, then don't try to write it
+            print "Skipped class ",num_class," because empty"
+            continue
+        append_list[num_class].Update()
+        write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class]+'_extracted.vtk')
         print ""
 
     # run_classification(num_hidden, data_dir, output_dir, checkpoint_dir, summary_dir, conv, multiclass)
 
-def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hidden=1024,  fiber_name="Fiber", conv=False, multiclass=False):
+def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hidden=1024,  fiber_name="Fiber", conv=False):
     # Run evaluation on the input data set
-    if multiclass:
-      num_classes = 54
-    else:
-      num_classes = 2
+    num_classes = 54
     start = time.time()
     with tf.Graph().as_default() as g:
 
@@ -144,9 +146,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
         sess.run(local_init)
 
         while True:
-            prediction = []
-            for i in range(num_classes):
-                prediction.append([])
+            prediction = {}
 
             # read in the most recent checkpointed graph and weights
             ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
@@ -165,22 +165,25 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
                 step = 0
                 while not coord.should_stop():
                     # run a single iteration of evaluation
-                    #                    predictions = sess.run([top_k_op])
                     val, pred, name = sess.run([predict_value, predict_class, labels])
+                   
 
                     pred_lab = pred[0][0]
-                    pred_val = val[0][0]
-                    prediction[pred_lab].append(name[0])
-                    # if multiclass and pred_val >= threshold_labels[pred_lab]:
-                    #   prediction[pred_lab].append(name[0])
-                    # elif not multiclass:
-                    #   prediction[pred_lab].append(name[0])
+
+                    if not pred_lab in prediction:
+                        prediction[pred_lab] = []
+
+                    fiber_name, index = fibername_split(name[0]) #fetch the index
+                    prediction[pred_lab].append(index)
+
+                    # if val >= threshold_labels[pred_lab]:
+                    #     fiber_name, index = fibername_split(name[0]) #fetch the index
+                    #     prediction[pred_lab].append(index)
 
                     step += 1
             except tf.errors.OutOfRangeError:
                 summary = tf.Summary()
                 summary.ParseFromString(sess.run(summary_op))
-                # summary.value.add(tag='Precision @ 1', simple_value=precision)
                 summary_writer.add_summary(summary, global_step)
 
             finally:
@@ -188,19 +191,16 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
 
             # shutdown gracefully
             coord.join(threads)
-            # if run_once:
             break
         sess.close()
-        # print "prediction\n", prediction
+
         pred_dictionnary = reformat_prediction(prediction, num_classes)
-        classification(pred_dictionnary, output_dir, num_classes, multiclass, fiber_name)
+        classification(pred_dictionnary, output_dir, num_classes, fiber_name)
     end = time.time()
-
-
 
 def main(_):
     start = time.time()
-    run_classification(FLAGS.data_dir, FLAGS.output_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_hidden,  FLAGS.fiber_name, FLAGS.conv, FLAGS.multiclass)
+    run_classification(FLAGS.data_dir, FLAGS.output_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_hidden,  FLAGS.fiber_name, FLAGS.conv)
     end = time.time()
     print YELLOW, "Classification Process took %dh%02dm%02ds" % (convert_time(end - start)), NC
 

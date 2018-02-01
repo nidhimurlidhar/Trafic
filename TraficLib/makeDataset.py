@@ -49,6 +49,9 @@ def run_make_dataset(input_folder, output_folder, landmark_file="", num_landmark
             input_fiber = os.path.join(class_path, fiber)
             output_fiber = os.path.join(check_folder(output_folder,True), class_fib)
             output_fiber = os.path.join(output_fiber, fiber)
+            while os.path.isfile(output_fiber): # if a fiber already exists with the same name, we simply append a _1 to the new fiber
+                name, ext = os.path.splitext(output_fiber)
+                output_fiber = name + "_1" + ext
             make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=num_points, num_landmarks=num_landmarks, model_fiber=model_fiber, lmOn=landmarksOn,torsOn=torsionOn,curvOn=curvatureOn)
 
 def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, num_landmarks=5, model_fiber="", lmOn=True, torsOn=True, curvOn=True, classification=False):
@@ -56,11 +59,10 @@ def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, 
     CLI_DIR = os.path.join(currentPath, "..","..","cli-modules")
 
     env_dir = os.path.join(currentPath, "..", "miniconda2")
-    prefix_cli = os.path.join(env_dir,"envs","env_trafic","lib","libc6_2.17","lib","x86_64-linux-gnu","ld-2.17.so")
     fibersampling = os.path.join(CLI_DIR, "fibersampling")
     fiberfeaturescreator = os.path.join(CLI_DIR, "fiberfeaturescreator")
     if classification:
-        cmd_sampling = [prefix_cli, fibersampling,"--input", check_file(input_fiber), "--output",
+        cmd_sampling = [fibersampling,"--input", check_file(input_fiber), "--output",
                  check_path(output_fiber, True), "-N", str(num_points)]
     else:
         cmd_sampling = [fibersampling,"--input", check_file(input_fiber), "--output",
@@ -73,7 +75,7 @@ def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, 
         print("\nerr : " + str(err))
 
     if classification:
-        cmd_ffc = [prefix_cli, fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
+        cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
                      check_path(output_fiber), "-N", str(num_landmarks), "--landmarksfile", landmark_file]
     else:
         cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",

@@ -1,8 +1,0 @@
-# Markups fiducial file version = 4.5
-# CoordinateSystem = 0
-# columns = id,x,y,z,ow,ox,oy,oz,vis,sel,lock,label,desc,associatedNodeID
-Landmark_0,-24.1863,-1.3114,-11.3004,0,0,0,1,1,1,0,F-1,,
-Landmark_1,-35.0626,-2.53045,-3.03002,0,0,0,1,1,1,0,F-2,,
-Landmark_2,-37.3232,-15.3779,4.52867,0,0,0,1,1,1,0,F-3,,
-Landmark_3,-34.8674,-28.7698,8.50149,0,0,0,1,1,1,0,F-4,,
-Landmark_4,-31.3796,-39.9471,14.3,0,0,0,1,1,1,0,F-5,,

@@ -28,7 +28,6 @@ message(STATUS ${niral_utilities_INCLUDE_DIRS})
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(TraficMulti)
-add_subdirectory(TraficBi)
 add_subdirectory(TraficLib)
 add_subdirectory(CLI/cxx)
 ## NEXT_MODULE
