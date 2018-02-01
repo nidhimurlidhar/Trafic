@@ -3,6 +3,7 @@ from fiberfileIO import *
 import numpy as np
 import os
 import tensorflow as tf
+import vtk
 
 class data_set:
     def __init__(self, height, rows, cols):
@@ -71,17 +72,18 @@ def fiber_extract_feature(fiber_file, lmOn, curveOn, torsOn, num_landmarks, num_
         nb_features += 1
         array_name.append("torsion")
 
-    for k in xrange(0, nb_fibers):
-        fiber_data = np.ndarray(shape=(nb_features, num_points), dtype=np.float64)
-        for i in xrange(0, nb_features):
-            feature_array = fiber.GetPointData().GetScalars(array_name[i])
-            for j in xrange(k*num_points, (k+1)*num_points):
-                fiber_data[i, j % num_points] = feature_array.GetTuple1(j)
+    for k in range(0, nb_fibers):
+        npoints = 0
+        points = vtk.vtkIdList()
+        fiber.GetCellPoints(k, points)
+        dataset.append([])
+        for j, arrname in enumerate(array_name):
+            feature_array = fiber.GetPointData().GetScalars(arrname)
+            dataset[k].append([])
+            for i in range(points.GetNumberOfIds()):
+                pointid = points.GetId(i)
+                dataset[k][j].append(feature_array.GetTuple1(pointid))
 
-        if fiber_data.shape != (nb_features, num_points):
-            raise Exception('Unexpected image shape: %s' % str(fiber_data.shape))
-        dataset.append(fiber_data)
-        del fiber_data
         if train: #training case
             labels.append(label)
         else:
