@@ -45,7 +45,7 @@ def check_file(filename):
 def check_folder(folder, force=False):
     if not os.path.isdir(folder):
         if force:
-            print RED, "---Folder %s created" % folder, NC
+            print (RED, "---Folder %s created" % folder, NC)
             sys.stdout.flush()
             os.makedirs(folder)
         else:
@@ -84,7 +84,7 @@ def check_dir_root(filename, root):
 def display_loading(index, complete, old_process):
     progress = (100*index)/(complete-1)
     if progress%5==0 and progress != old_process:
-        print "..%d%%"%progress,
+        print ("..%d%%"%progress,)
         sys.stdout.flush()
         old_process = progress
     return old_process
@@ -92,7 +92,7 @@ def display_loading(index, complete, old_process):
 
 # Read a .vtk or a .vtp file and return a Polydata
 def read_vtk_data(fiber_filename):
-    print "---Reading file ", fiber_filename
+    print ("---Reading file ", fiber_filename)
     sys.stdout.flush()
     try:
         if not os.path.isfile(fiber_filename):
@@ -116,7 +116,7 @@ def read_vtk_data(fiber_filename):
 
 # Write a .vtk or a .vtp file and taking a Polydata in parameter
 def write_vtk_data(vtk_file, fiber_filename):
-    print "---Writing file ", GREEN, fiber_filename, NC
+    print ("---Writing file ", GREEN, fiber_filename, NC)
     sys.stdout.flush()
     try:
         if fiber_filename.rfind(".vtk") != -1:
@@ -147,7 +147,7 @@ def write_vtk_data(vtk_file, fiber_filename):
 # Extract the fibers whose the indexes are in the parameter ids from the bundle, and return a vtkPolydata containing
 # those fibers
 def extract_fiber(bundle, ids):
-    print "ids selected: ", ids.GetNumberOfTuples()
+    print ("ids selected: ", ids.GetNumberOfTuples())
     sys.stdout.flush()
     selectionNode = vtk.vtkSelectionNode()
     selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)

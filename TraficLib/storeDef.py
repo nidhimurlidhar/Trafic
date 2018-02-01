@@ -38,9 +38,9 @@ def convert_to(data_set, name, directory):
     cols = fibers.shape[2]
 
     filename = os.path.join(directory, name + '.tfrecords')
-    print 'Writing', filename
+    print ('Writing', filename)
     writer = tf.python_io.TFRecordWriter(filename)
-    for index in xrange(num_fib):
+    for index in range(num_fib):
         # print "Label:", labels[index].dtype
         fiber_raw = fibers[index].tostring()
         example = tf.train.Example(features=tf.train.Features(feature={
@@ -62,7 +62,7 @@ def fiber_extract_feature(fiber_file, lmOn, curveOn, torsOn, num_landmarks, num_
     nb_features = 0
     if lmOn:
         nb_features += num_landmarks
-        for i in xrange(0, num_landmarks):
+        for i in range(0, num_landmarks):
             array_name.append("Distance2Landmark" + str(i+1))
     if curveOn:
         nb_features += 1
@@ -87,4 +87,5 @@ def fiber_extract_feature(fiber_file, lmOn, curveOn, torsOn, num_landmarks, num_
         else:
             labels.append(label+":"+str(k))
 
-    return dataset, labels
+    print("dataset shape", np.shape(np.array(dataset)), np.shape(np.array(labels)))
+    return np.array(dataset), np.array(labels)
