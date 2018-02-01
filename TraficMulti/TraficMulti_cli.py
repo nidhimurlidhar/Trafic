@@ -5,7 +5,7 @@ import tensorflow as tf
 from os import path, sys
 from shutil import rmtree
 import subprocess
-
+import csv
 
 TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "TraficLib")
 sys.path.append(TRAFIC_LIB_DIR)
@@ -17,12 +17,21 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('input', '', 'Input fiber to classify')
+flags.DEFINE_string('input_csv', '', 'Input csv with each line being "input_fiber_file,output_directory,checkpoint_dir,summary_dir,displacement_field"')
 flags.DEFINE_string('output', '', 'Output directory')
 flags.DEFINE_string('summary', '', 'Output summary directory')
 flags.DEFINE_string('displacement', '', 'Displacement field to PED_1yr-2yr atlas')
 flags.DEFINE_string('checkpoints', '', 'Tensorflow checkpoint directory')
 
 class TraficMultiLogic():
+  def parse_csv_input(self, filename):
+    with open(filename, 'rb') as csvfile:
+        input_list = csv.reader(csvfile)
+        array = []
+        for row in input_list:
+            array.append(row)
+        return array
+
   def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path):
     runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
@@ -58,6 +67,7 @@ class TraficMultiLogic():
     err = open(os.path.join(log_dir,"training_err.txt"), "wb")
     proc = subprocess.Popen(cmd, stdout=out, stderr=err)
     proc.wait()
+
     print("\nout : " + str(out) + "\nerr : " + str(err))    
     #rmtree(tmp_dir)
     return
@@ -68,7 +78,15 @@ def main():
     print FLAGS.summary
     print FLAGS.displacement
     print FLAGS.checkpoints
+
     logic = TraficMultiLogic()
+
+    if FLAGS.input_csv != '':
+        input_list = logic.parse_csv_input(FLAGS.input_csv)
+        for row in input_list:
+            logic.runClassification(row[0], row[2], row[3], row[1], row[4])
+        return
+
     logic.runClassification(FLAGS.input, FLAGS.checkpoints, FLAGS.summary, FLAGS.output, FLAGS.displacement)
     
     return
