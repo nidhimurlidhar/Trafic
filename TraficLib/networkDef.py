@@ -52,26 +52,16 @@ def inference(train_data, num_hidden, num_labels, is_training):
 
     num_data = int(train_data.get_shape()[1])
     train_data = batch_norm(train_data, is_training)
-    with tf.name_scope('Hidden1'):
-        w_1 = tf.Variable(
-            tf.truncated_normal(shape=(num_data, num_hidden), dtype=tf.float32), name='w_1')
-        b_1 = tf.Variable(tf.zeros([num_hidden], dtype=tf.float32), name='b_1', dtype=tf.float32)
-        h_final = tf.nn.relu(tf.matmul(train_data, w_1) + b_1)
 
-    # with tf.name_scope('Hidden2'):
-    #     w_2 = tf.Variable(
-    #         tf.truncated_normal([num_hidden, num_hidden]), name='w_2')
-    #     b_2 = tf.Variable(tf.zeros([num_hidden]), name='b_2')
-    #     h_final = tf.nn.relu(tf.matmul(h_1, w_2) + b_2)
+    layer1 = tf.layers.dense(inputs=train_data, units=num_hidden, activation=tf.nn.relu)
+    layer2 = tf.layers.dense(inputs=layer1, units=num_hidden, activation=tf.nn.relu)
+    layer3 = tf.layers.dense(inputs=layer2, units=num_hidden, activation=tf.nn.relu)
+    layer4 = tf.layers.dense(inputs=layer3, units=num_hidden, activation=tf.nn.relu)
+    layer5 = tf.layers.dense(inputs=layer4, units=num_labels, activation=tf.nn.relu)
+    dropout = tf.layers.dropout(inputs=layer5, rate=0.5, training=is_training)
+    final = tf.layers.dense(inputs=dropout, units=num_labels, activation=None)
 
-    with tf.name_scope('Final'):
-        w_final = tf.Variable(
-            tf.truncated_normal([num_hidden, num_labels], dtype=tf.float32), name='w_final')
-        b_final = tf.Variable(tf.zeros([num_labels], dtype=tf.float32), name='b_final')
-        logits = tf.matmul(h_final, w_final) + b_final
-    # tf.histogram_summary("Logits", logits)
-
-    return logits
+    return final
 
 
 def loss(logits, labels):
