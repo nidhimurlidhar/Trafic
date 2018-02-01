@@ -147,8 +147,6 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
 
         while True:
             prediction = {}
-            # for i in range(num_classes):
-                # prediction.append([])
 
             # read in the most recent checkpointed graph and weights
             ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
@@ -175,9 +173,12 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
                     if not pred_lab in prediction:
                         prediction[pred_lab] = []
 
-                    if val >= threshold_labels[pred_lab]:
-                        fiber_name, index = fibername_split(name[0]) #fetch the index
-                        prediction[pred_lab].append(index)
+                    fiber_name, index = fibername_split(name[0]) #fetch the index
+                    prediction[pred_lab].append(index)
+
+                    # if val >= threshold_labels[pred_lab]:
+                    #     fiber_name, index = fibername_split(name[0]) #fetch the index
+                    #     prediction[pred_lab].append(index)
 
                     step += 1
             except tf.errors.OutOfRangeError:
