@@ -62,7 +62,6 @@ For each dataset:
 polydatatransform --invertx --inverty --fiber_file [path_to_landmarks_file.fcsv] -D [path_to_displacement_field.nrrd] -o [path_to_output_landmarks_file.fcsv]
 ```
 * Check that the transformed landmarks are correct using a visualisation tool such as Slicer
-* Add a prefix/suffix to all fiber files so that no files are named similarly across all your data
 * run makeDataset.py with the following parameters:
 ```
 --input_folder : this dataset's directory

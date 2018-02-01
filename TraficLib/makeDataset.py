@@ -49,6 +49,9 @@ def run_make_dataset(input_folder, output_folder, landmark_file="", num_landmark
             input_fiber = os.path.join(class_path, fiber)
             output_fiber = os.path.join(check_folder(output_folder,True), class_fib)
             output_fiber = os.path.join(output_fiber, fiber)
+            while os.path.isfile(output_fiber): # if a fiber already exists with the same name, we simply append a _1 to the new fiber
+                name, ext = os.path.splitext(output_fiber)
+                output_fiber = name + "_1" + ext
             make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=num_points, num_landmarks=num_landmarks, model_fiber=model_fiber, lmOn=landmarksOn,torsOn=torsionOn,curvOn=curvatureOn)
 
 def make_fiber_feature(input_fiber, output_fiber, landmark_file, num_points=50, num_landmarks=5, model_fiber="", lmOn=True, torsOn=True, curvOn=True, classification=False):
