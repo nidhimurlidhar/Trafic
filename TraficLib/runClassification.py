@@ -24,7 +24,7 @@ flags.DEFINE_string('fiber_name', "Fiber",
                          """To know the name of the fiber to extract (By default: fiber_name = 'Fiber' which gives Fiber_extracted.vtk)""")
 
 
-name_labels = [ '0', 'Arc_L_FT', 'Arc_L_FrontoParietal', 'Arc_L_TemporoParietal',  'Arc_R_FT', 'Arc_R_FrontoParietal', 'Arc_R_TemporoParietal',  'CGC_L',  'CGC_R',
+name_labels = [ '0', 'Arc_L_FrontoParietal', 'Arc_L_FT', 'Arc_L_TemporoParietal', 'Arc_R_FrontoParietal',  'Arc_R_FT', 'Arc_R_TemporoParietal',  'CGC_L',  'CGC_R',
                 'CGH_L',  'CGH_R',  'CorpusCallosum_Genu',  'CorpusCallosum_Motor', 'CorpusCallosum_Parietal',  'CorpusCallosum_PreMotor',  'CorpusCallosum_Rostrum',
                 'CorpusCallosum_Splenium',  'CorpusCallosum_Tapetum', 'CorticoFugal-Left_Motor',  'CorticoFugal-Left_Parietal', 'CorticoFugal-Left_PreFrontal',
                 'CorticoFugal-Left_PreMotor', 'CorticoFugal-Right_Motor', 'CorticoFugal-Right_Parietal',  'CorticoFugal-Right_PreFrontal',  'CorticoFugal-Right_PreMotor',
@@ -76,7 +76,6 @@ def classification(dict, output_dir, num_classes, fiber_name):
     # input: test_names     - containing the name and index of each fibers
     # output: No output but at the end of this function, we write the positives fibers in one vtk file for each class
     #         Except the class 0
-
 
     # Create the output directory if necessary
     if not os.path.exists(os.path.dirname(output_dir)):
@@ -143,7 +142,9 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
         sess = tf.Session()
 
         # init the local variables
+        print 'Starting tf session'
         sess.run(local_init)
+
 
         while True:
             prediction = {}
@@ -166,21 +167,16 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
                 while not coord.should_stop():
                     # run a single iteration of evaluation
                     val, pred, name = sess.run([predict_value, predict_class, labels])
-                   
-
                     pred_lab = pred[0][0]
 
                     if not pred_lab in prediction:
                         prediction[pred_lab] = []
 
+                    # if val >= threshold_labels[pred_lab]:
                     fiber_name, index = fibername_split(name[0]) #fetch the index
                     prediction[pred_lab].append(index)
-
-                    # if val >= threshold_labels[pred_lab]:
-                    #     fiber_name, index = fibername_split(name[0]) #fetch the index
-                    #     prediction[pred_lab].append(index)
-
                     step += 1
+
             except tf.errors.OutOfRangeError:
                 summary = tf.Summary()
                 summary.ParseFromString(sess.run(summary_op))
@@ -193,7 +189,6 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, num_hi
             coord.join(threads)
             break
         sess.close()
-
         pred_dictionnary = reformat_prediction(prediction, num_classes)
         classification(pred_dictionnary, output_dir, num_classes, fiber_name)
     end = time.time()
