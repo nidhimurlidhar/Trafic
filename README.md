@@ -82,7 +82,7 @@ Expected output: a tran.tfrecords file should have been created in your data dir
 ```
 --data_dir as the directory containing you .tfrecords file
 --checkpoint_dir as the final output directory, where you trained model will be stored
---summary dir as a log directory
+--summary_dir as a log directory
 ```
 * use the --multiclass flag if you want to train for multiclassification
 * Expected output: your output directory should contain a checkpoint file and different tensorflow files.
@@ -97,7 +97,12 @@ Run the TraficMulti_cli.py script with the following parameters:
 ```
 --input (Input fiber file to be classified)
 --displacement (Displacement field from input space to the training dataset's space)
--checkpoints (Directory containg the trained model - Tensorflow checkpoint files -)
+--checkpoints (Directory containg the trained model - Tensorflow checkpoint files -)
+```
+Alternatively, you can specify parameters as a csv file, in which case the script should be called with the --input_csv flag.
+In the csv input file, each row should consist of the input parameters needed to classify one tract. The parameters should be ordered this way:
+```
+fiber_file,output_directory,model_directory,summary_directory,displacement_field
 ```
 #### Output parameters:
 ```
