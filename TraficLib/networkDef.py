@@ -7,10 +7,11 @@ VALIDATION_FILE = 'valid.tfrecords'
 TEST_FILE = 'test.tfrecords'
 
 def accuracy(predictions, labels):
-    acc = (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
+    
+    acc = (100 * tf.count_nonzero(tf.equal(tf.argmax(predictions, axis=1),tf.argmax(labels,axis=1))) / (int)(np.shape(predictions)[0]))
+    tf.summary.scalar('accuracy', acc)
+    
     return acc
-    # ppv, tpr
-
 
 def variable_summaries(var, name):
     # Attach a lot of summaries to a Tensor (for TensorBoard visualization).
@@ -56,9 +57,7 @@ def inference(train_data, num_hidden, num_labels, is_training):
     layer1 = tf.layers.dense(inputs=train_data, units=num_hidden, activation=tf.nn.relu)
     layer2 = tf.layers.dense(inputs=layer1, units=num_hidden, activation=tf.nn.relu)
     layer3 = tf.layers.dense(inputs=layer2, units=num_hidden, activation=tf.nn.relu)
-    layer4 = tf.layers.dense(inputs=layer3, units=num_hidden, activation=tf.nn.relu)
-    layer5 = tf.layers.dense(inputs=layer4, units=num_labels, activation=tf.nn.relu)
-    dropout = tf.layers.dropout(inputs=layer5, rate=0.5, training=is_training)
+    dropout = tf.layers.dropout(inputs=layer3, rate=0.3, training=is_training)
     final = tf.layers.dense(inputs=dropout, units=num_labels, activation=None)
 
     return final
@@ -68,12 +67,11 @@ def loss(logits, labels):
     # input:    logits      - logits tensor, [batch_size, num_labels]
     # input:    labels      - labels tensor, [batch_size, num_labels]
     # output:   loss        - loss tensor of type float.
-    # logits = tf.cast(logits, tf.float32)
-    loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits))
-        # tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=0.8, name=None))
 
+    loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+    loss = tf.reduce_mean(loss)
     tf.summary.scalar('loss', loss)
+
     return loss
 
 
@@ -82,8 +80,8 @@ def training(l, lr):
     # input: lr         - learning_rate scalar for gradient descent
     # output: train_op  - the operation for training
 
-    # train_op = tf.train.GradientDescentOptimizer(lr).minimize(l)
-    train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(l)
+    train_op = tf.train.GradientDescentOptimizer(lr).minimize(l)
+    # train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(l)
     return train_op
 
 
@@ -109,6 +107,149 @@ def batch_norm(inputs, is_training, decay = 0.80):
     else:
         return tf.nn.batch_normalization(inputs,
             pop_mean, pop_var, beta, scale, epsilon)
+
+
+def read_and_decode(filename_queue, label_type_int64):
+    reader = tf.TFRecordReader()
+    _, serialized_example = reader.read(filename_queue)
+    features = tf.parse_single_example(
+      serialized_example,
+      # Defaults are not specified since both keys are required.
+      features={
+          'fiber_raw': tf.FixedLenFeature([], tf.string),
+          'label': tf.FixedLenFeature([], tf.string),
+      })
+    # Convert from a scalar string tensor (whose single string has
+
+    fiber = tf.decode_raw(features['fiber_raw'], tf.float64)
+    fiber = tf.cast(fiber, tf.float32)
+    if label_type_int64:
+        label = tf.decode_raw(features['label'], tf.int64)
+        label.set_shape([1])
+    else:
+        label = features['label']
+
+    return fiber, label
+
+
+def reformat_train_label(labels, num_labels):
+    labels_re = tf.reshape(labels, [-1])
+    labels_re = tf.one_hot(labels_re, depth=num_labels)
+    return labels_re
+
+
+def reformat_test_label(labels, num_labels):
+    # labels_re = tf.string(labels, out_type=tf.int32)
+    labels_re = tf.one_hot(labels, num_labels)
+    return labels_re
+
+
+def inputs(dir, type,  batch_size, num_epochs, conv=False):
+    """Reads input data num_epochs times.
+    Args:
+    train: Selects between the training (True) and validation (False) data.
+    batch_size: Number of examples per returned batch.
+    num_epochs: Number of times to read the input data, or 0/None to
+       train forever.
+    Returns:
+    A tuple (images, labels), where:
+    * images is a float tensor with shape [batch_size, mnist.IMAGE_PIXELS]
+      in the range [-0.5, 0.5].
+    * labels is an int32 tensor with shape [batch_size] with the true label,
+      a number in the range [0, mnist.NUM_CLASSES).
+    Note that an tf.train.QueueRunner is added to the graph, which
+    must be run using e.g. tf.train.start_queue_runners().
+    """
+
+    if not num_epochs:
+        num_epochs = None
+
+    if type == 'train':
+        label_int = True
+        filename = os.path.join(dir, TRAIN_FILE)
+
+    elif type == 'valid':
+        label_int = True
+        filename = os.path.join(dir, VALIDATION_FILE)
+
+    elif type == 'test':
+        label_int = False
+        filename = os.path.join(dir, TEST_FILE)
+
+    record_iterator = tf.python_io.tf_record_iterator(path=filename)
+
+    for string_record in record_iterator:
+        break
+    example = tf.train.Example()
+    example.ParseFromString(string_record)
+
+    nb_pts = int(example.features.feature['num_points'].int64_list.value[0])
+
+    nb_ft = int(example.features.feature['num_features'].int64_list.value[0])
+
+
+    with tf.name_scope('input'):
+        filename_queue = tf.train.string_input_producer(
+            [filename], num_epochs=num_epochs)
+
+        # Even when reading in multiple threads, share the filename
+        # queue.
+        fiber, label = read_and_decode(filename_queue, label_int)
+
+        fiber.set_shape([nb_pts*nb_ft])
+
+        if conv:
+            fiber = tf.reshape(fiber, [nb_ft, nb_pts])
+
+        print "Fiber Shape :", fiber.get_shape()
+        print "Label Shape :", label.get_shape()
+        # Shuffle the examples and collect them into batch_size batches.
+        # (Internally uses a RandomShuffleQueue.)
+        # We run this in two threads to avoid being a bottleneck.
+        fibers, sparse_labels = tf.train.shuffle_batch(
+            [fiber, label], batch_size=batch_size, num_threads=4,
+            capacity=10000 + 3 * batch_size,
+            # Ensures a minimum amount of shuffling of examples.
+            min_after_dequeue=10000)
+    return fibers, sparse_labels
+
+
+def reformat_conv(dataset, num_features, num_points, labels, num_labels):
+    num_channels = 1
+    dataset = dataset.reshape(
+        (-1, num_features, num_points)).astype(np.float32)
+    labels = (np.arange(num_labels) == labels[:, None]).astype(np.float32)
+    return dataset, labels
+
+
+def evaluation (logits, labels, batch_size):
+    # input: logits: Logits tensor, float - [batch_size, 256, 256, NUM_CLASSES].
+    # input: labels: Labels tensor, int32 - [batch_size, 256, 256]
+    # output: scaler int32 tensor with number of examples that were
+    #         predicted correctly
+    logits = tf.cast(logits, dtype=tf.float32)
+    labels = tf.reshape(labels, [-1])
+    print ""
+    print_tensor_shape(labels, "labels")
+    print_tensor_shape(logits, "logits")
+    size = 100/batch_size # = 100*(1/batch_size)
+
+    # _, eval = tf.nn.top_k(logits, k=1)
+    eval = tf.nn.in_top_k(logits, labels, k=1)
+    # eval = tf.cast(eval, dtype=tf.int8)
+    eval = tf.reshape(eval, [-1])
+    print_tensor_shape(eval, "eval")
+    # num_true = tf.where(eval)
+    non_zero = tf.count_nonzero(eval)
+    # print_tensor_shape(non_zero, "non_zero")
+    acc = tf.scalar_mul(size, non_zero)
+    # print_tensor_shape(acc, "acc")
+    return acc
+
+def print_tensor_shape(tensor, string):
+# input: tensor and string to describe it
+    if __debug__:
+        print('DEBUG ' + string, tensor.get_shape())
 
 
 def inference_conv(train_data, patch_size, num_features, num_points, num_hidden, num_labels, is_training):
@@ -233,151 +374,3 @@ def inference_conv(train_data, patch_size, num_features, num_points, num_hidden,
 #     else:
 #         valid = None
 #     return logits, valid, saver
-
-
-def read_and_decode(filename_queue, label_type_int64):
-    reader = tf.TFRecordReader()
-    _, serialized_example = reader.read(filename_queue)
-    features = tf.parse_single_example(
-      serialized_example,
-      # Defaults are not specified since both keys are required.
-      features={
-          'fiber_raw': tf.FixedLenFeature([], tf.string),
-          'label': tf.FixedLenFeature([], tf.string),
-      })
-    # Convert from a scalar string tensor (whose single string has
-
-    fiber = tf.decode_raw(features['fiber_raw'], tf.float64)
-    fiber = tf.cast(fiber, tf.float32)
-    if label_type_int64:
-        label = tf.decode_raw(features['label'], tf.int64)
-        label.set_shape([1])
-    else:
-        label = features['label']
-
-    return fiber, label
-
-
-def reformat_train_label(labels, num_labels):
-    labels_re = tf.reshape(labels, [-1])
-    labels_re = tf.one_hot(labels_re, depth=num_labels)
-    return labels_re
-
-
-def reformat_test_label(labels, num_labels):
-    # labels_re = tf.string(labels, out_type=tf.int32)
-    labels_re = tf.one_hot(labels, num_labels)
-    return labels_re
-
-
-def inputs(dir, type,  batch_size, num_epochs, conv=False):
-    """Reads input data num_epochs times.
-    Args:
-    train: Selects between the training (True) and validation (False) data.
-    batch_size: Number of examples per returned batch.
-    num_epochs: Number of times to read the input data, or 0/None to
-       train forever.
-    Returns:
-    A tuple (images, labels), where:
-    * images is a float tensor with shape [batch_size, mnist.IMAGE_PIXELS]
-      in the range [-0.5, 0.5].
-    * labels is an int32 tensor with shape [batch_size] with the true label,
-      a number in the range [0, mnist.NUM_CLASSES).
-    Note that an tf.train.QueueRunner is added to the graph, which
-    must be run using e.g. tf.train.start_queue_runners().
-    """
-
-    if not num_epochs:
-        num_epochs = None
-
-    if type == 'train':
-        label_int = True
-        filename = os.path.join(dir, TRAIN_FILE)
-
-    elif type == 'valid':
-        label_int = True
-        filename = os.path.join(dir, VALIDATION_FILE)
-
-    elif type == 'test':
-        label_int = False
-        filename = os.path.join(dir, TEST_FILE)
-
-    record_iterator = tf.python_io.tf_record_iterator(path=filename)
-
-    for string_record in record_iterator:
-        break
-    example = tf.train.Example()
-    example.ParseFromString(string_record)
-
-    nb_pts = int(example.features.feature['num_points'].int64_list.value[0])
-
-    nb_ft = int(example.features.feature['num_features'].int64_list.value[0])
-
-
-    with tf.name_scope('input'):
-        filename_queue = tf.train.string_input_producer(
-            [filename], num_epochs=num_epochs)
-
-        # Even when reading in multiple threads, share the filename
-        # queue.
-        fiber, label = read_and_decode(filename_queue, label_int)
-
-        fiber.set_shape([nb_pts*nb_ft])
-
-        if conv:
-            fiber = tf.reshape(fiber, [nb_ft, nb_pts])
-
-
-        # label = tf.reshape(label, [-1])
-
-        # fiber_re = tf.reshape(fiber, [nb_ft, nb_pts])
-
-        print "Shape :", fiber.get_shape()
-        print "Shape :", label.get_shape()
-        # Shuffle the examples and collect them into batch_size batches.
-        # (Internally uses a RandomShuffleQueue.)
-        # We run this in two threads to avoid being a bottleneck.
-        fibers, sparse_labels = tf.train.shuffle_batch(
-            [fiber, label], batch_size=batch_size, num_threads=4,
-            capacity=1000 + 3 * batch_size,
-            # Ensures a minimum amount of shuffling of examples.
-            min_after_dequeue=1000)
-    return fibers, sparse_labels
-
-
-def reformat_conv(dataset, num_features, num_points, labels, num_labels):
-    num_channels = 1
-    dataset = dataset.reshape(
-        (-1, num_features, num_points)).astype(np.float32)
-    labels = (np.arange(num_labels) == labels[:, None]).astype(np.float32)
-    return dataset, labels
-
-
-def evaluation (logits, labels, batch_size):
-    # input: logits: Logits tensor, float - [batch_size, 256, 256, NUM_CLASSES].
-    # input: labels: Labels tensor, int32 - [batch_size, 256, 256]
-    # output: scaler int32 tensor with number of examples that were
-    #         predicted correctly
-    logits = tf.cast(logits, dtype=tf.float32)
-    labels = tf.reshape(labels, [-1])
-    print ""
-    print_tensor_shape(labels, "labels")
-    print_tensor_shape(logits, "logits")
-    size = 100/batch_size # = 100*(1/batch_size)
-
-    # _, eval = tf.nn.top_k(logits, k=1)
-    eval = tf.nn.in_top_k(logits, labels, k=1)
-    # eval = tf.cast(eval, dtype=tf.int8)
-    eval = tf.reshape(eval, [-1])
-    print_tensor_shape(eval, "eval")
-    # num_true = tf.where(eval)
-    non_zero = tf.count_nonzero(eval)
-    # print_tensor_shape(non_zero, "non_zero")
-    acc = tf.scalar_mul(size, non_zero)
-    # print_tensor_shape(acc, "acc")
-    return acc
-
-def print_tensor_shape(tensor, string):
-# input: tensor and string to describe it
-    if __debug__:
-        print('DEBUG ' + string, tensor.get_shape())
