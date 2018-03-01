@@ -61,7 +61,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         string_tensor = tf.constant(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')).replace('\n', '  \n').replace('    ', '&nbsp;&nbsp;&nbsp;&nbsp;'))
         tf.summary.text('parameters', string_tensor)
         ## NoConv
-        fibers, labels = nn.inputs(data_dir, 'train', batch_size=batch_size, num_epochs=num_epochs, conv=False)
+        fibers, labels = nn.inputs(data_dir, batch_size=batch_size, num_epochs=num_epochs, conv=False)
         results = nn.inference(fibers, num_hidden, num_classes, is_training=True, num_layers=num_layers)
 
         # ### Conv

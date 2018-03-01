@@ -103,7 +103,7 @@ def read_and_decode(filename_queue, label_type_int64):
 
     return fiber, label
 
-def inputs(dir, type,  batch_size, num_epochs, conv=False):
+def inputs(dir,  batch_size, num_epochs, conv=False):
     """Reads input data num_epochs times.
     Args:
     train: Selects between the training (True) and validation (False) data.
@@ -123,17 +123,8 @@ def inputs(dir, type,  batch_size, num_epochs, conv=False):
     if not num_epochs:
         num_epochs = None
 
-    if type == 'train':
-        label_int = True
-        filename = os.path.join(dir, TRAIN_FILE)
-
-    elif type == 'valid':
-        label_int = True
-        filename = os.path.join(dir, VALIDATION_FILE)
-
-    elif type == 'test':
-        label_int = False
-        filename = os.path.join(dir, TEST_FILE)
+    label_int = True
+    filename = os.path.join(dir, TRAIN_FILE)
 
     record_iterator = tf.python_io.tf_record_iterator(path=filename)
 
