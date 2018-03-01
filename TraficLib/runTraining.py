@@ -68,13 +68,16 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         # fibers, labels = nn.inputs(data_dir, 'train', batch_size=batch_size, num_epochs=num_epochs, conv=True)
         # results = nn.inference_conv(fibers, 2, 34, 50, num_hidden, num_classes, is_training=True)
 
-        labels = nn.reformat_train_label(labels, num_classes)
+        labels = tf.reshape(labels, [-1])
+        # labels = tf.Print(labels, [labels])
         # calculate the loss from the results of inference and the labels
         loss = nn.loss(results, labels)
         accuracy = nn.accuracy(results, labels)
 
         # setup the training operations
-        train_op = nn.training(loss, learning_rate)
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            train_op = nn.training(loss, learning_rate)
 
         # setup the summary ops to use TensorBoard
         summary_op = tf.summary.merge_all()

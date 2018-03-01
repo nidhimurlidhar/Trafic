@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import os
+from runStore import run_store
 
 TRAIN_FILE = 'train.tfrecords'
 VALIDATION_FILE = 'valid.tfrecords'
@@ -8,8 +9,8 @@ TEST_FILE = 'test.tfrecords'
 
 def accuracy(predictions, labels):
     
-    acc = (100 * tf.count_nonzero(tf.equal(tf.argmax(predictions, axis=1),tf.argmax(labels,axis=1))) / (int)(np.shape(predictions)[0]))
-    tf.summary.scalar('accuracy', acc)
+    acc = (100 * tf.count_nonzero(tf.equal(tf.argmax(predictions, axis=1),labels)) / (int)(np.shape(predictions)[0]))
+    tf.summary.scalar('accuracy', acc, family='test')
     
     return acc
 
@@ -26,22 +27,7 @@ def variable_summaries(var, name):
         tf.scalar_summary('min_' + name, tf.reduce_min(var))
         tf.histogram_summary('histogram_' + name, var)
 
-
-def reformat(dataset, labels, num_labels):
-    # input:    dataset     - 3D tensor (batch_size, num_features, num_points)
-    # input:    labels      - 1D tensor (batch_size)
-    # input:    num_labels  - number of labels
-    # output:   dataset     - dataset reshaped in a 2D tensor (batch_size, num_features*num_points)
-    # output:   labels      - labels reshaped in a (batch_size, num_labels)
-
-    dataset = tf.reshape(dataset, [-1, dataset.shape[1] * dataset.shape[2]])
-
-    # Map 0 to [1.0, 0.0, 0.0 ...], 1 to [0.0, 1.0, 0.0 ...]
-    labels = (np.arange(num_labels) == labels[:, None]).astype(np.float32)
-    return dataset, labels
-
-
-def inference(train_data, num_hidden, num_labels, is_training):
+def inference(train_data, num_hidden, num_labels, is_training, num_layers):
     # input:    train_data      - train tensor [batch_size, num_data]
     # input:    num_hidden      - number of hidden layers
     # input:    num_data        - num_feature*num_points
@@ -51,14 +37,23 @@ def inference(train_data, num_hidden, num_labels, is_training):
     # output:   valid           - tensor of computed valid_logits
     # output:   saver           - saver of the model
 
-    num_data = int(train_data.get_shape()[1])
-    train_data = batch_norm(train_data, is_training)
+    train_data = tf.layers.batch_normalization(train_data, training=is_training)
+    if num_layers < 1:
+        print 'Error: number of layers should be at least 1'
+        num_layers = 1
+    
+    layer = tf.layers.dense(inputs=train_data, name='layer0', units=8192, activation=tf.nn.relu)
+    layer2 = tf.layers.dense(inputs=layer, name='layer1', units=4096   , activation=tf.nn.relu)
+    layer3 = tf.layers.dense(inputs=layer2, name='layer2', units=2048, activation=tf.nn.relu)
+    layer4 = tf.layers.dense(inputs=layer3, name='layer3', units=1024, activation=tf.nn.relu)
+    layer5 = tf.layers.dense(inputs=layer4, name='layer4', units=512, activation=tf.nn.relu)
+    
+    # if num_layers > 1:
+    #     for i in xrange(1,num_layers):
+    #         layer = tf.layers.dense(inputs=layer, name='layer' + str(i), units=num_hidden, activation=tf.nn.relu)
 
-    layer1 = tf.layers.dense(inputs=train_data, units=num_hidden, activation=tf.nn.relu)
-    layer2 = tf.layers.dense(inputs=layer1, units=num_hidden, activation=tf.nn.relu)
-    layer3 = tf.layers.dense(inputs=layer2, units=num_hidden, activation=tf.nn.relu)
-    dropout = tf.layers.dropout(inputs=layer3, rate=0.3, training=is_training)
-    final = tf.layers.dense(inputs=dropout, units=num_labels, activation=None)
+    dropout = tf.layers.dropout(inputs=layer4, name='dropout', rate=0.5, training=is_training)
+    final = tf.layers.dense(inputs=dropout, name='final', units=num_labels, activation=None)
 
     return final
 
@@ -68,9 +63,10 @@ def loss(logits, labels):
     # input:    labels      - labels tensor, [batch_size, num_labels]
     # output:   loss        - loss tensor of type float.
 
-    loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
     loss = tf.reduce_mean(loss)
-    tf.summary.scalar('loss', loss)
+
+    tf.summary.scalar('loss', loss, family='test')
 
     return loss
 
@@ -80,8 +76,9 @@ def training(l, lr):
     # input: lr         - learning_rate scalar for gradient descent
     # output: train_op  - the operation for training
 
-    train_op = tf.train.GradientDescentOptimizer(lr).minimize(l)
-    # train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(l)
+    # train_op = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(l)
+    train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(l)
+
     return train_op
 
 
@@ -130,19 +127,6 @@ def read_and_decode(filename_queue, label_type_int64):
         label = features['label']
 
     return fiber, label
-
-
-def reformat_train_label(labels, num_labels):
-    labels_re = tf.reshape(labels, [-1])
-    labels_re = tf.one_hot(labels_re, depth=num_labels)
-    return labels_re
-
-
-def reformat_test_label(labels, num_labels):
-    # labels_re = tf.string(labels, out_type=tf.int32)
-    labels_re = tf.one_hot(labels, num_labels)
-    return labels_re
-
 
 def inputs(dir, type,  batch_size, num_epochs, conv=False):
     """Reads input data num_epochs times.
