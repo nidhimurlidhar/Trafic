@@ -81,31 +81,6 @@ def training(l, lr):
 
     return train_op
 
-
-def batch_norm(inputs, is_training, decay = 0.80):
-    scale = tf.Variable(tf.ones([]))
-    beta = tf.Variable(tf.zeros([]))
-    pop_mean = tf.Variable(tf.zeros([]), trainable=False)
-    pop_var = tf.Variable(tf.ones([]), trainable=False)
-    epsilon = 0.0001
-    if is_training:
-        batch_mean, batch_var = tf.nn.moments(inputs, [0, 1])
-        print_tensor_shape(batch_mean, "Batch Mean")
-        print_tensor_shape(batch_var, "Batch Var")
-        print_tensor_shape(pop_mean, "Pop Mean")
-        print_tensor_shape(pop_var, "Pop Var")
-        train_mean = tf.assign(pop_mean,
-                               pop_mean * decay + batch_mean * (1 - decay))
-        train_var = tf.assign(pop_var,
-                              pop_var * decay + batch_var * (1 - decay))
-        with tf.control_dependencies([train_mean, train_var]):
-            return tf.nn.batch_normalization(inputs,
-                batch_mean, batch_var, beta, scale, epsilon)
-    else:
-        return tf.nn.batch_normalization(inputs,
-            pop_mean, pop_var, beta, scale, epsilon)
-
-
 def read_and_decode(filename_queue, label_type_int64):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
