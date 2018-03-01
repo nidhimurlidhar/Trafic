@@ -4,6 +4,7 @@ import argparse
 import os
 import tensorflow as tf
 import smote
+import json
 from storeDef import *
 
 flags = tf.app.flags
@@ -25,7 +26,9 @@ def read_training(train_dir, num_landmarks, num_points, landmarks, curvature, to
     folders = [
         os.path.join(train_dir, d) for d in sorted(os.listdir(train_dir))
         if os.path.isdir(os.path.join(train_dir, d))]
+    fiber_names = []
     for label, folder in enumerate(folders):
+        fiber_names.append(os.path.basename(folder))
         fiber_files = [
             os.path.join(folder, d) for d in sorted(os.listdir(folder))]
         for fiber in fiber_files:
@@ -40,7 +43,7 @@ def read_training(train_dir, num_landmarks, num_points, landmarks, curvature, to
                 print('Could not read:', fiber_file, ':', e, '- it\'s ok, skipping.')
 
     permutation = np.random.permutation(len(dataset))
-    return np.array(dataset)[permutation], np.array(labels)[permutation]
+    return np.array(dataset)[permutation], np.array(labels)[permutation], fiber_names
 
 def read_testing(test_dir, src_dir, num_landmarks, num_points, landmarks, curvature, torsion):
     dataset = []
@@ -65,19 +68,27 @@ def read_testing(test_dir, src_dir, num_landmarks, num_points, landmarks, curvat
     
     return np.array(dataset), np.array(data_names)
     
-def run_store(train_dir='', valid_dir='', test_dir='', original_dir='', num_landmarks=5, num_points=50, lmOn=True, curvOn=True, torsOn=True, use_smote=False):
+def run_store(train_dir='', valid_dir='', test_dir='', original_dir='', num_landmarks=32, num_points=50, lmOn=True, curvOn=True, torsOn=True, use_smote=False):
+    nb_features = num_landmarks + int(curvOn) + int(torsOn)
     if train_dir:
-        dataset, labels = read_training(train_dir, num_landmarks, num_points, lmOn, curvOn, torsOn)
+        dataset, labels, names = read_training(train_dir, num_landmarks, num_points, lmOn, curvOn, torsOn)
+
+        ##output descritpion file
+        with open(os.path.join(train_dir, 'dataset_description.json'), 'w') as json_description_file:
+            dictionary = { 'directory' : train_dir, 'num_landmarks' : num_landmarks, 'num_points' : num_points, 'lmOn' : lmOn, 'curvOn' : curvOn, 'torsOn' : torsOn, 'smote' : use_smote }
+            json_description_file.write(json.dumps({'store_parameters' : dictionary, 'labels' : names}, indent=4, separators=(',', ': ')))
+
+
         if use_smote:
             dataset, labels = smote.generate_with_SMOTE(dataset.reshape(len(dataset),-1),labels)
             permutation = np.random.permutation(len(dataset))
             dataset = dataset[permutation]
             labels = labels[permutation]
             print('Smote success !')
-        dataset = dataset.reshape(len(dataset), num_landmarks + 2, num_points)
-    	train_set = data_set(len(dataset), num_landmarks + 2, num_points)
-    	train_set.data = dataset
-    	train_set.labels = labels
+        dataset = dataset.reshape(len(dataset), nb_features, num_points)
+        train_set = data_set(len(dataset), nb_features, num_points)
+        train_set.data = dataset
+        train_set.labels = labels
         print ('Final dataset shape: ', np.shape(train_set.data))
         #   Convert to Examples and write the result to TFRecords.
         convert_to(train_set, 'train', train_dir)
@@ -90,14 +101,9 @@ def run_store(train_dir='', valid_dir='', test_dir='', original_dir='', num_land
 
     elif test_dir:
         data, names = read_testing(test_dir, original_dir, num_landmarks, num_points, lmOn, curvOn, torsOn)
-        data = data.reshape(len(data), num_landmarks + 2, num_points)
+        data = data.reshape(len(data), nb_features, num_points)
         print (np.shape(data))
-        test_set = data_set(len(data), num_landmarks + 2, num_points)
-        test_set.data = data
-        test_set.labels = names 
-        # Convert to Examples and write the result to TFRecords.
-        convert_to(test_set, 'test', test_dir)
-        # Convert_to(test_set.validation, 'validation')
+        return data, names
 
 
 def main(_):

@@ -7,14 +7,17 @@ import argparse
 import sys
 from fiberfileIO import *
 from datetime import datetime
+import shutil
+import json
 
 YELLOW = "\033[0;33m"
 NC = "\033[0m"
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
+flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
 flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to run trainer.')
-flags.DEFINE_integer('num_hidden', 1024, 'Number of hidden layers.')
+flags.DEFINE_integer('num_hidden', 1024, 'Size of hidden layers.')
+flags.DEFINE_integer('num_layers', 3, 'Number of layers.')
 flags.DEFINE_integer('batch_size', 5, 'Batch size.')
 flags.DEFINE_string('data_dir', '',
                     'Directory with the training data.')
@@ -23,9 +26,30 @@ flags.DEFINE_string('checkpoint_dir', '',
 flags.DEFINE_string('summary_dir', '',
                     """Directory where to write summary.""")
 
-def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.001, batch_size=5, num_hidden=1024):
+def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.0001, batch_size=5, num_hidden=1024, num_layers=3):
     
-    num_classes = 54
+    num_classes = 0
+
+    checkpoint_dir = os.path.join(checkpoint_dir,datetime.now().strftime("%Y%m%d-%H%M%S"))
+    if not os.path.isdir(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+
+    shutil.copy(os.path.join(data_dir, 'dataset_description.json'), os.path.join(checkpoint_dir, 'dataset_description.json'))
+
+    description_dict = {}
+    ## output json description file
+    with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'r') as json_desc_file:
+        json_string = json_desc_file.read()
+        description_dict = json.loads(json_string)
+        num_classes = len(description_dict['labels'])
+
+    with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'w') as json_desc_file:
+        training_parameters = {'nb_layers' : num_layers, 'batch_size' : batch_size, 'num_epochs' : num_epochs, 'num_hidden' : num_hidden, 'input_dataset' : data_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary_dir}
+        description_dict['training_parameters'] = training_parameters
+        json_desc_file.write(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')))
+
+    # with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'w') as json_desc_file:
+
 
     # construct the graph
     with tf.Graph().as_default():
@@ -34,16 +58,17 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
         # read the images and labels
 
+        string_tensor = tf.constant(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')).replace('\n', '  \n').replace('    ', '&nbsp;&nbsp;&nbsp;&nbsp;'))
+        tf.summary.text('parameters', string_tensor)
         ## NoConv
         fibers, labels = nn.inputs(data_dir, 'train', batch_size=batch_size, num_epochs=num_epochs, conv=False)
-        results = nn.inference(fibers, num_hidden, num_classes, is_training=True)
+        results = nn.inference(fibers, num_hidden, num_classes, is_training=True, num_layers=num_layers)
 
         # ### Conv
         # fibers, labels = nn.inputs(data_dir, 'train', batch_size=batch_size, num_epochs=num_epochs, conv=True)
         # results = nn.inference_conv(fibers, 2, 34, 50, num_hidden, num_classes, is_training=True)
 
         labels = nn.reformat_train_label(labels, num_classes)
-        
         # calculate the loss from the results of inference and the labels
         loss = nn.loss(results, labels)
         accuracy = nn.accuracy(results, labels)
@@ -124,7 +149,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
 def main(_):
     start = time.time()
-    run_training(FLAGS.data_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.num_hidden)
+    run_training(FLAGS.data_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.num_hidden, FLAGS.num_layers)
     end = time.time()
     print "Training Process took %dh%02dm%02ds" % (convert_time(end - start))
 
