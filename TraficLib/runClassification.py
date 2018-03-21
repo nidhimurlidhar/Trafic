@@ -43,57 +43,6 @@ def fibername_split(fibername):
         raise Exception("Non valid format for the file %s. "
                         "Impossible to extract name and index of the fiber" % fibername)
 
-
-def reformat_prediction(predictions, num_classes):
-    vector_id_blank = []
-    for i in range(num_classes):
-        vector_id_blank.append(vtk.vtkIdTypeArray())
-    dict_pred = {}
-    for pred_class, indexes in predictions.items():
-        if int(pred_class) > num_classes +1 or int(pred_class) < 0:
-            continue
-        if pred_class not in dict_pred.keys():
-            dict_pred[pred_class] = vtk.vtkIdTypeArray()
-        for index in indexes:
-            dict_pred[pred_class].InsertNextValue(index)
-
-
-
-
-    return dict_pred
-
-def classification(dict, output_dir, num_classes, fiber_name, name_labels):
-    # input: predictions    - prediction of the data to classify, dictionary where key=predicted class and value = array of indexes
-    # input: name_labels    - containing the name of all the labels (classes)
-    # input: test_names     - containing the name and index of each fibers
-    # output: No output but at the end of this function, we write the positives fibers in one vtk file for each class
-    #         Except the class 0 
-
-    append_list = np.ndarray(shape=num_classes, dtype=np.object)
-    for i in range(num_classes):
-        append_list[i] = vtk.vtkAppendPolyData()
-
-    bundle_fiber = vtk.vtkPolyData()
-
-    bundle_fiber = read_vtk_data(fiber_name)
-    
-    print (dict.keys())
-    for pred_class in dict.keys():
-        if vtk.VTK_MAJOR_VERSION > 5:
-            append_list[pred_class].AddInputData(extract_fiber(bundle_fiber, dict[pred_class]))
-        else:
-            append_list[pred_class].AddInput(extract_fiber(bundle_fiber, dict[pred_class]))
-
-    for num_class in range(num_classes):
-        if append_list[num_class].GetInput() is None:# or num_class == 0: #if the vtk file would be empty, then don't try to write it
-            print("Skipped class ",num_class," because empty")
-            continue
-        append_list[num_class].Update()
-        write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class]+'_extracted.vtk')
-        print ("")
-
-    # run_classification(num_hidden, data_dir, output_dir, checkpoint_dir, summary_dir, conv, multiclass)
-
 def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_name="Fiber", conv=False):
     # Run evaluation on the input data set
 
@@ -188,7 +137,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
             try:
                 val, pred, name = sess.run([predict_value, predict_class, labels])
                 for i in range(0,len(val)):
-                    pred_lab = pred[i][0]
+                    pred_lab = str(pred[i][0])
                     if not pred_lab in prediction:
                         prediction[pred_lab] = []
                     if val[i] >= 0.7:
@@ -206,8 +155,16 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
             coord.join(threads)
             break
         sess.close()
-        pred_dictionnary = reformat_prediction(prediction, num_classes)
-        classification(pred_dictionnary, output_dir, num_classes, data_dir, name_labels)
+        print(prediction)
+
+        with open(os.path.join(checkpoint_dir, 'dataset_description.json')) as json_desc_file:
+            json_string = json_desc_file.read()
+            description_dict = json.loads(json_string)
+            description_dict['predictions'] = prediction
+            
+            with open(os.path.join(output_dir, 'classification_output.json'), 'w') as output_file:
+                output_json_string = json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': '))
+                output_file.write(output_json_string)
     end = time.time()
 
 def main(_):
