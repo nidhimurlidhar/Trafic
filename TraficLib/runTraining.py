@@ -14,7 +14,7 @@ YELLOW = "\033[0;33m"
 NC = "\033[0m"
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
+flags.DEFINE_float('learning_rate', 0.000001, 'Initial learning rate.')
 flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to run trainer.')
 flags.DEFINE_integer('num_hidden', 1024, 'Size of hidden layers.')
 flags.DEFINE_integer('num_layers', 3, 'Number of layers.')
@@ -26,7 +26,7 @@ flags.DEFINE_string('checkpoint_dir', '',
 flags.DEFINE_string('summary_dir', '',
                     """Directory where to write summary.""")
 
-def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.0001, batch_size=5, num_hidden=1024, num_layers=3):
+def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.000001, batch_size=5, num_hidden=1024, num_layers=3):
     
     num_classes = 0
 
@@ -42,7 +42,13 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         json_string = json_desc_file.read()
         description_dict = json.loads(json_string)
         num_classes = len(description_dict['labels'])
-
+        store_params = description_dict['store_parameters']
+        num_landmarks = store_params['num_landmarks']
+        num_points = store_params['num_points']
+        lmOn = store_params['lmOn']
+        curvOn = store_params['curvOn']
+        torsOn = store_params['torsOn']
+        num_features = num_landmarks * int(lmOn) + int(curvOn) + int(torsOn)
     with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'w') as json_desc_file:
         training_parameters = {'nb_layers' : num_layers, 'batch_size' : batch_size, 'num_epochs' : num_epochs, 'num_hidden' : num_hidden, 'input_dataset' : data_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary_dir}
         description_dict['training_parameters'] = training_parameters
@@ -62,7 +68,18 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         tf.summary.text('parameters', string_tensor)
         ## NoConv
         fibers, labels = nn.inputs(data_dir, batch_size=batch_size, num_epochs=num_epochs, conv=False)
+
+        # fibers = tf.placeholder(tf.int32,shape=(batch_size, num_features))
+        # labels = tf.placeholder(tf.int32, shape=(batch_size, num_classes))
+        
+        # with tf.variable_scope("model") as scope:
+
         results = nn.inference(fibers, num_hidden, num_classes, is_training=True, num_layers=num_layers)
+
+        # with tf.variable_scope(scope, reuse=True):
+            # results_valid = nn.inference(fibers, num_hidden, num_classes, is_training=True, num_layers=num_layers)
+
+        # validation_results = nn.inference(validation_fibers, num_hidden, num_classes, is_training=False, num_layers=num_layers, reuse=True)
 
         # ### Conv
         # fibers, labels = nn.inputs(data_dir, 'train', batch_size=batch_size, num_epochs=num_epochs, conv=True)
@@ -72,7 +89,9 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         # labels = tf.Print(labels, [labels])
         # calculate the loss from the results of inference and the labels
         loss = nn.loss(results, labels)
+
         accuracy = nn.accuracy(results, labels)
+        # validation_accuracy = nn.accuracy(validation_results, validation_labels)
 
         # setup the training operations
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -112,13 +131,14 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
                 # start time and run one training iteration
                 start_time = time.time()
-                _, loss_value, accuracy_value = sess.run([train_op, loss, accuracy])
+                # ev_fibers, ev_labels = sess.run([tf_fibers, tf_labels])
+                _, loss_value, accuracy_value = sess.run([train_op, loss, accuracy])#, feed_dict ={fibers: ev_fibers, labels: ev_labels})
                 duration = time.time() - start_time
 
                 if step % 50 == 0:
                     print('Step %d: loss = %.12f, acc = %.10f (%.3f sec)' % (step, loss_value, accuracy_value, duration))
 
-                    print ""
+                    print("")
 
                     sys.stdout.flush()
 
@@ -128,10 +148,11 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
                     summary_writer.flush()
 
                 # less frequently output checkpoint files.  Used for evaluating the model
-                if step % 5000 == 0:
+                if step % 1000 == 0:
                     checkpoint_path = os.path.join(checkpoint_dir,
                                                    'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
+                  
                 step += 1
 
                 # quit after we run out of input files to read
@@ -154,7 +175,7 @@ def main(_):
     start = time.time()
     run_training(FLAGS.data_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.num_hidden, FLAGS.num_layers)
     end = time.time()
-    print "Training Process took %dh%02dm%02ds" % (convert_time(end - start))
+    print("Training Process took %dh%02dm%02ds" % (convert_time(end - start)))
 
 
 if __name__ == '__main__':
