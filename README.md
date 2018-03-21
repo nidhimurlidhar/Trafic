@@ -10,54 +10,37 @@ Trafic is a program that performs classification of tract fibers using deep lear
 * VTK (v6.1.0 and above)
 * SlicerExecutionModel
 ### Software
-* Slicer with the SlicerDMRI Extension (Use of Tractography Display)
 * polydatatransform (part of niral_utilities)
 ### Notes
 * Have +4GiB free of ram to run the program
 * Have an algorithm to compute atlas-registration (e.g: DTI-Reg) to obtain the displacement field
-* Program is running in background and write every outputs in the corresponding log file
 
-## How does it work ?
-Trafic is an extension made by two modules:
-* TraficBi for the Biclassification
-* TrafficMulti for the Multiclassification
-
-Each Module has three tabs:
-* The Edition Tab
-* THe Training Tab
-* The Classification Tab
-
-### The Edition Tab
-This tab permits to create a training data set or add some data to an existent one.
-### The training Tab
-The training tab permits to train our algorithm on a valid training data set. It is recommended to use the edition tab to create the dataset.
-### The classification Tab
-The classification tab, performs the actual classification using the model trained previously.
-
-### TO DO
-* Test the extension on Linux and on Mac
-* Upgrade Polydata (new ITK and VTK version)
-* Test CLI paths
-* Add a verification for the training data set (must be valid i.e 2 folders for bi and 54 for multi)
-* Use slicer.run to run CLI, instead of subprocess
 ## LICENSE
 see LICENSE
 
 ## CLI Instructions
-You can use Trafic as either a Slicer extension, or directly as a CLI application
+Trafic is a CLI application
+
 ### Training from CLI
 #### Preprocessing
-Your datasets should use this architecture:
+Before training the model, you need to create the dataset that Trafic will use
+
+Your data should be organized like this architecture:
 ```
-root/
-..../fiber_name1/fiber_name1.vtk
-..../fiber_name2/fiber_name2.vtk
-..../fiber_name3/fiber_name3.vtk
+...
+atlas1/fiber_name1/fiber_name1.vtk
+atlas1/fiber_name2/fiber_name2.vtk
+atlas1/fiber_name3/fiber_name3.vtk
+...
+atlas2/fiber_name1/fiber_name1.vtk
+atlas2/fiber_name2/fiber_name2.vtk
+atlas2/fiber_name3/fiber_name3.vtk
+...
 ```
-You can train against multiple datasets, but you need to perform a registration from one of these dataset to all the others. This dataset should be the one containing the landmarks file.
+You can train against multiple datasets, but you need to have a displacement field from one of these datasets to all the others. This dataset should be the one for which you have a landmarks file.
 
 For each dataset: 
-* Transform the landmarks file from the dataset you registered to this particular dataset's space using polydatatransform (from NiralUser/niral_utilities):
+* Transform the landmarks file with the displacement field to this particular dataset's space using polydatatransform (from NiralUser/niral_utilities):
 ```
 polydatatransform --invertx --inverty --fiber_file [path_to_landmarks_file.fcsv] -D [path_to_displacement_field.nrrd] -o [path_to_output_landmarks_file.fcsv]
 ```
