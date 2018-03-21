@@ -6,10 +6,12 @@ import networkDef as nn
 
 import sys
 import json
-import simplejson
+# import json
 from fiberfileIO import *
 
 import shutil
+
+from runStore import run_store
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
@@ -31,7 +33,7 @@ def fibername_split(fibername):
     # input: fibername      - designate a single fiber in the format [name of the fiber bundle]:[index of the fiber]
     # output: name          - name of the fiber bundle
     # output: index         - index the single fiber to extract
-
+    fibername = fibername.decode('UTF-8')
     list = fibername.split(":")
     if len(list) == 2:
         name = list[0]
@@ -47,7 +49,7 @@ def reformat_prediction(predictions, num_classes):
     for i in range(num_classes):
         vector_id_blank.append(vtk.vtkIdTypeArray())
     dict_pred = {}
-    for pred_class, indexes in predictions.iteritems():
+    for pred_class, indexes in predictions.items():
         if int(pred_class) > num_classes +1 or int(pred_class) < 0:
             continue
         if pred_class not in dict_pred.keys():
@@ -65,30 +67,30 @@ def classification(dict, output_dir, num_classes, fiber_name, name_labels):
     # input: name_labels    - containing the name of all the labels (classes)
     # input: test_names     - containing the name and index of each fibers
     # output: No output but at the end of this function, we write the positives fibers in one vtk file for each class
-    #         Except the class 0
+    #         Except the class 0 
 
     append_list = np.ndarray(shape=num_classes, dtype=np.object)
-    for i in xrange(num_classes):
+    for i in range(num_classes):
         append_list[i] = vtk.vtkAppendPolyData()
 
     bundle_fiber = vtk.vtkPolyData()
 
     bundle_fiber = read_vtk_data(fiber_name)
     
-    print dict.keys()
+    print (dict.keys())
     for pred_class in dict.keys():
         if vtk.VTK_MAJOR_VERSION > 5:
             append_list[pred_class].AddInputData(extract_fiber(bundle_fiber, dict[pred_class]))
         else:
             append_list[pred_class].AddInput(extract_fiber(bundle_fiber, dict[pred_class]))
 
-    for num_class in xrange(num_classes):
-        if append_list[num_class].GetInput() is None or num_class == 0: #if the vtk file would be empty, then don't try to write it
-            print "Skipped class ",num_class," because empty"
+    for num_class in range(num_classes):
+        if append_list[num_class].GetInput() is None:# or num_class == 0: #if the vtk file would be empty, then don't try to write it
+            print("Skipped class ",num_class," because empty")
             continue
         append_list[num_class].Update()
         write_vtk_data(append_list[num_class].GetOutput(), output_dir+'/'+name_labels[num_class]+'_extracted.vtk')
-        print ""
+        print ("")
 
     # run_classification(num_hidden, data_dir, output_dir, checkpoint_dir, summary_dir, conv, multiclass)
 
@@ -97,12 +99,11 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
 
     print (output_dir)
     if not os.path.exists(output_dir):
-        print output_dir
         os.makedirs(output_dir)
     try:
         shutil.copyfile(os.path.join(checkpoint_dir, 'dataset_description.json'), os.path.join(output_dir, 'dataset_description.json'))
     except IOError:
-        print 'Failed to copy'
+        print ('Failed to copy')
 
     start = time.time()
     with tf.Graph().as_default() as g:
@@ -110,7 +111,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
         #read training information
         with open(os.path.join(checkpoint_dir, 'dataset_description.json')) as json_desc_file:
             json_string = json_desc_file.read()
-            description_dict = simplejson.loads(json_string)
+            description_dict = json.loads(json_string)
             name_labels = description_dict['labels']
             store_params = description_dict['store_parameters']
             train_params = description_dict['training_parameters']
@@ -127,19 +128,18 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
 
             num_layers = train_params['nb_layers']
             num_hidden = train_params['num_hidden']
-            
         # Build a Graph that computes the logits predictions from the
         # inference model.  We'll use a prior graph built by the training
 
         # Non Conv Version
+
         if not conv:
-            # fibers, labels = nn.inputs(data_dir, 'test', batch_size=1, num_epochs=1, conv=False)
-            fibers, labels = run_store(test_dir=dir, num_landmarks=num_landmarks, num_points=num_points, lmOn=lmOn, curvOn=curvOn, torsOn=torsOn, use_smote=False)
+            fibers, labels = run_store(test_dir=data_dir, num_landmarks=num_landmarks, num_points=num_points, lmOn=lmOn, curvOn=curvOn, torsOn=torsOn, use_smote=False)
             fibers = fibers.reshape(len(fibers), num_points * num_features)
             fibers = tf.convert_to_tensor(fibers, dtype=tf.float32)
             labels = tf.convert_to_tensor(labels, dtype=tf.string)           
 
-
+            # with tf.variable_scope("model") as scope:
             logits = nn.inference(fibers, num_hidden=num_hidden, num_labels=num_classes, is_training=False, num_layers=num_layers)
 
 
@@ -165,7 +165,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
         sess = tf.Session()
 
         # init the local variables
-        print 'Starting tf session'
+        print ('Starting tf session')
         sess.run(local_init)
 
 
@@ -186,20 +186,14 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             try:
-                step = 0
-                while not coord.should_stop():
-                    # run a single iteration of evaluation
-                    val, pred, name = sess.run([predict_value, predict_class, labels])
-                    for i in range(0,len(val[0])):
-                        pred_lab = pred[0][i][0]
-                        if not pred_lab in prediction:
-                            prediction[pred_lab] = []
-
-                        # if val >= threshold_labels[pred_lab]:
-                        fiber_name, index = fibername_split(name[0][i]) #fetch the index
+                val, pred, name = sess.run([predict_value, predict_class, labels])
+                for i in range(0,len(val)):
+                    pred_lab = pred[i][0]
+                    if not pred_lab in prediction:
+                        prediction[pred_lab] = []
+                    if val[i] >= 0.7:
+                        fiber_name, index = fibername_split(name[i]) #fetch the index
                         prediction[pred_lab].append(index)
-                    step += 1
-                    break
             except tf.errors.OutOfRangeError:
                 summary = tf.Summary()
                 summary.ParseFromString(sess.run(summary_op))
@@ -213,14 +207,14 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
             break
         sess.close()
         pred_dictionnary = reformat_prediction(prediction, num_classes)
-        classification(pred_dictionnary, output_dir, num_classes, data_dir + '/' + fiber_name, name_labels)
+        classification(pred_dictionnary, output_dir, num_classes, data_dir, name_labels)
     end = time.time()
 
 def main(_):
     start = time.time()
     run_classification(FLAGS.data_dir, FLAGS.output_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.fiber_name, FLAGS.conv)
     end = time.time()
-    print YELLOW, "Classification Process took %dh%02dm%02ds" % (convert_time(end - start)), NC
+    print (YELLOW, "Classification Process took %dh%02dm%02ds" % (convert_time(end - start)), NC)
 
 
 if __name__ == '__main__':

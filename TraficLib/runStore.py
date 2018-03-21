@@ -45,28 +45,16 @@ def read_training(train_dir, num_landmarks, num_points, landmarks, curvature, to
     permutation = np.random.permutation(len(dataset))
     return np.array(dataset)[permutation], np.array(labels)[permutation], fiber_names
 
-def read_testing(test_dir, src_dir, num_landmarks, num_points, landmarks, curvature, torsion):
-    dataset = []
-    data_names = []
-    fibers = [
-        os.path.join(test_dir, d) for d in sorted(os.listdir(test_dir))
-        if os.path.isfile(os.path.join(test_dir, d))]
-
-    for fiber_file in fibers:
-        if fiber_file.rfind(".vtk")!= -1 or fiber_file.rfind(".vtp")!= -1 :
-            name_fiber = os.path.basename(fiber_file)
-            name_src = os.path.join(src_dir, name_fiber)
-            try:
-                data_fiber, data_name = fiber_extract_feature(fiber_file, landmarks, curvature, torsion,
-                                                      num_landmarks, num_points, name_src, train=False)
-                dataset.extend(data_fiber.reshape((len(data_fiber),-1)))
-                data_names.extend(data_name)
-            except IOError as e:
-                print('Could not read:', fiber_file, ':', e, '- it\'s ok, skipping.')
-        else:
-            print 'Could not read:', fiber_file, 'Not a vtk file ...Skipping.'
+def read_testing(fiber_file, src_dir, num_landmarks, num_points, landmarks, curvature, torsion):
+    try:
+        data_fiber, data_name = fiber_extract_feature(fiber_file, landmarks, curvature, torsion,
+            num_landmarks, num_points, os.path.splitext(fiber_file)[0], train=False)
+        dataset = data_fiber.reshape((len(data_fiber),-1))
     
-    return np.array(dataset), np.array(data_names)
+    except IOError as e:
+        print('Could not read:', fiber_file, ':', e, '- it\'s ok, skipping.')
+        
+    return np.array(dataset), np.array(data_name)
     
 def run_store(train_dir='', valid_dir='', test_dir='', original_dir='', num_landmarks=32, num_points=50, lmOn=True, curvOn=True, torsOn=True, use_smote=False):
     nb_features = num_landmarks + int(curvOn) + int(torsOn)
@@ -84,14 +72,32 @@ def run_store(train_dir='', valid_dir='', test_dir='', original_dir='', num_land
             permutation = np.random.permutation(len(dataset))
             dataset = dataset[permutation]
             labels = labels[permutation]
+
             print('Smote success !')
         dataset = dataset.reshape(len(dataset), nb_features, num_points)
-        train_set = data_set(len(dataset), nb_features, num_points)
-        train_set.data = dataset
-        train_set.labels = labels
-        print ('Final dataset shape: ', np.shape(train_set.data))
+
+        len_validation = int(len(dataset) * 0.2)
+        len_testing = int(len(dataset) * 0.1)
+        len_training = len(dataset) - (len_validation + len_testing)
+
+        validation_set = data_set(len_training, nb_features, num_points)
+        validation_set.data = dataset[0:len_validation]
+        validation_set.labels = labels[0:len_validation]
+
+        testing_set = data_set(len_training, nb_features, num_points)
+        testing_set.data = dataset[len_validation + 1 : len_validation + len_testing]
+        testing_set.labels = labels[len_validation + 1 : len_validation + len_testing]
+
+        training_set = data_set(len_training, nb_features, num_points)
+        training_set.data = dataset[len_validation + len_testing + 1 : - 1]
+        training_set.labels = labels[len_validation + len_testing + 1 : - 1]
+
+        print ('Final datasets shape: ', 'validation: ', np.shape(validation_set.data), 'testing: ', np.shape(testing_set.data), 'training: ', np.shape(training_set.data))
         #   Convert to Examples and write the result to TFRecords.
-        convert_to(train_set, 'train', train_dir)
+
+        convert_to(validation_set, 'validation', train_dir)
+        convert_to(testing_set, 'testing', train_dir)
+        convert_to(training_set, 'train', train_dir)
 
     elif valid_dir:
         valid_set = read_training(valid_dir, num_landmarks, num_points, lmOn, curvOn, torsOn)
