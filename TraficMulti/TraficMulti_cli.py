@@ -9,15 +9,16 @@ import csv
 
 TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "TraficLib")
 sys.path.append(TRAFIC_LIB_DIR)
-print path.join(TRAFIC_LIB_DIR)
-from envInstallTF import runMaybeEnvInstallTF
 
+# from envInstallTF import runMaybeEnvInstallTF
+from PipelineEval import run_pipeline_eval
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
+flags.DEFINE_string('input_csv', '', 'Input csv with each line being "input_fiber_file,output_directory,checkpoint_dir,summary_dir,displacement_field". Other parameters will be ignored if ths is set')
+flags.DEFINE_string('preprocessed_fiber', '', 'Input fiber with feature informations. The preprocessing pipeline will be skipped')
 flags.DEFINE_string('input', '', 'Input fiber to classify')
-flags.DEFINE_string('input_csv', '', 'Input csv with each line being "input_fiber_file,output_directory,checkpoint_dir,summary_dir,displacement_field"')
 flags.DEFINE_string('output', '', 'Output directory')
 flags.DEFINE_string('summary', '', 'Output summary directory')
 flags.DEFINE_string('displacement', '', 'Displacement field to PED_1yr-2yr atlas')
@@ -32,56 +33,42 @@ class TraficMultiLogic():
             array.append(row)
         return array
 
-  def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path):
-    runMaybeEnvInstallTF()
-    currentPath = os.path.dirname(os.path.abspath(__file__))
-    env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
-    cli_dir = os.path.join(currentPath, "..","..","cli-modules")
+  def runClassification(self, data_file,  model_dir, sum_dir, output_dir, dF_Path='', is_preprocessed=False):
+    
+    if is_preprocessed:
+        run_pipeline_eval(data_file, output_dir, model_dir, sum_dir, is_preprocessed=True)
+    else:
+        # runMaybeEnvInstallTF()
+        currentPath = os.path.dirname(os.path.abspath(__file__))
+        env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
+        cli_dir = os.path.join(currentPath, "..","..","cli-modules")
 
-    polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
-    tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
-    if not os.path.isdir(tmp_dir):
-      os.makedirs(tmp_dir)
-    new_lm_path = os.path.join(tmp_dir, "lm_class.fcsv")
+        polydatatransform = os.path.join(cli_dir, "polydatatransform")
+        lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
+        tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
+        if not os.path.isdir(tmp_dir):
+          os.makedirs(tmp_dir)
+        new_lm_path = os.path.join(tmp_dir, "lm_class.fcsv")
 
-    cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_Path, "-o", new_lm_path]
-    print(cmd_polydatatransform)
-    out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    print("\nout : " + str(out))
-
-    pipeline_eval_py = os.path.join(TRAFIC_LIB_DIR, "PipelineEval.py")
-    cmd_py = str(pipeline_eval_py) + ' --data_file ' + str(data_file) + ' --summary_dir ' + str(sum_dir)+ ' --checkpoint_dir ' + str(model_dir) + ' --output_dir ' + str(output_dir) + ' --landmark_file ' + str(new_lm_path)
-    cmd_virtenv = 'ENV_DIR="'+str(env_dir)+'";'
-    cmd_virtenv = cmd_virtenv + 'export PYTHONPATH=$ENV_DIR/envs/env_trafic/lib/python2.7/site-packages:$ENV_DIR/lib/:$ENV_DIR/lib/python2.7/lib-dynload/:$ENV_DIR/lib/python2.7/:$ENV_DIR/lib/python2.7/site-packages/:$PYTHONPATH;'
-    cmd_virtenv = cmd_virtenv + 'export PATH=$ENV_DIR/bin/:$PATH;'
-    cmd_virtenv = cmd_virtenv + 'source activate env_trafic;'
-    cmd_virtenv = cmd_virtenv + ' `which python` '
-    cmd_pipeline_class = cmd_virtenv + str(cmd_py) + ';'
-    print(str(cmd_pipeline_class))
-    cmd = ["bash", "-c", str(cmd_pipeline_class)]
-    log_dir = os.path.join(sum_dir,"Logs")
-    if not os.path.isdir(log_dir):
-        os.makedirs(log_dir)
-    out = open(os.path.join(log_dir,"training_out.txt"), "wb")
-    err = open(os.path.join(log_dir,"training_err.txt"), "wb")
-    proc = subprocess.Popen(cmd, stdout=out, stderr=err)
-    proc.wait()
-
-    print("\nout : " + str(out) + "\nerr : " + str(err))    
-    #rmtree(tmp_dir)
+        cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", dF_Path, "-o", new_lm_path]
+        print(cmd_polydatatransform)
+        out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        print("\nout : " + str(out))
+        run_pipeline_eval(data_file, output_dir, model_dir, sum_dir, new_lm_path)
     return
 
 def main():
-    print FLAGS.input
-    print FLAGS.output
-    print FLAGS.summary
-    print FLAGS.displacement
-    print FLAGS.checkpoints
-
     logic = TraficMultiLogic()
 
-    if FLAGS.input_csv != '':
+    summary = FLAGS.summary
+    if not summary:
+        summary = FLAGS.output
+
+    if FLAGS.preprocessed_fiber:
+        logic.runClassification(FLAGS.preprocessed_fiber, FLAGS.checkpoints, summary, FLAGS.output, is_preprocessed=True)
+        return
+
+    if FLAGS.input_csv:
         input_list = logic.parse_csv_input(FLAGS.input_csv)
         for row in input_list:
             logic.runClassification(row[0], row[2], row[3], row[1], row[4])
