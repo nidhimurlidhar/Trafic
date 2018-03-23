@@ -17,8 +17,9 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('input', '', 'Input fiber to classify')
-flags.DEFINE_string('input_csv', '', 'Input csv with each line being "input_fiber, deformation_field, output_fiber"')
+flags.DEFINE_string('input_csv', '', 'Input csv with each line being "input_fiber, deformation_field, landmarks_file, output_fiber"')
 flags.DEFINE_string('output', '', 'Output fiber path')
+flags.DEFINE_string('landmarks', '', 'Landmarks file path')
 flags.DEFINE_string('displacement', '', 'Displacement field to atlas used for training')
 flags.DEFINE_integer('number_points', 50, 'Number of points to sample')
 flags.DEFINE_integer('number_landmarks', 32, 'Number of landmarks to use')
@@ -35,14 +36,16 @@ def parse_csv_input(filename):
             array.append(row)
         return array
 
-def fiber_preprocessing(input_fiber, deformation_field, output_fiber, parameters ):
+def fiber_preprocessing(input_fiber, deformation_field, landmarks, output_fiber, parameters ):
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
     cli_dir = os.path.join(currentPath, "/", "cli-modules")
 
     polydatatransform = os.path.join(cli_dir, "polydatatransform")
     # lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
-    lm_ped = os.path.join('/root/trafic_data/datasetsJeffrey/clustered_landmarks.fcsv')
+    if landmarks == '':
+        print('No landmark file specified, using default...')
+        landmarks = os.path.join('/root/trafic_data/datasetsJeffrey/clustered_landmarks.fcsv')
 
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
@@ -52,7 +55,7 @@ def fiber_preprocessing(input_fiber, deformation_field, output_fiber, parameters
     if not os.path.isdir(os.path.dirname(output_fiber)) and not os.path.dirname(output_fiber):
       os.makedirs(os.path.dirname(output_fiber))
 
-    cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", lm_ped, "-D", deformation_field, "-o", new_lm_path]
+    cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", landmarks, "-D", deformation_field, "-o", new_lm_path]
     out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
     make_fiber_feature(input_fiber, output_fiber, new_lm_path, 
@@ -75,11 +78,11 @@ def main():
     if FLAGS.input_csv != '':
         input_list = logic.parse_csv_input(FLAGS.input_csv)
         for row in input_list:
-            fiber_preprocessing(row[0], row[1], row[2], parameters)
+            fiber_preprocessing(row[0], row[1], row[2],  row[3], parameters)
         return
 
+    fiber_preprocessing(FLAGS.input,  FLAGS.displacement, FLAGS.landmarks, FLAGS.output, parameters)
 
-    fiber_preprocessing(FLAGS.input,  FLAGS.displacement, FLAGS.output, parameters)
     
     return
 
