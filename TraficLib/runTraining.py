@@ -16,8 +16,8 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_float('learning_rate', 0.000001, 'Initial learning rate.')
 flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to run trainer.')
-flags.DEFINE_integer('num_hidden', 1024, 'Size of hidden layers.')
-flags.DEFINE_integer('num_layers', 3, 'Number of layers.')
+flags.DEFINE_integer('num_hidden', 1024, 'Size of hidden layers. Not currently in use')
+flags.DEFINE_integer('num_layers', 3, 'Number of layers. Not currently in use')
 flags.DEFINE_integer('batch_size', 5, 'Batch size.')
 flags.DEFINE_string('data_dir', '',
                     'Directory with the training data.')

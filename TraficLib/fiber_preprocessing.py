@@ -1,16 +1,9 @@
 import numpy as np
-import argparse
 import os
 import tensorflow as tf
 from os import path, sys
-from shutil import rmtree
 import subprocess
 import csv
-import os
-import argparse
-import subprocess
-import shutil
-import time
 import sys
 
 from makeDataset import make_fiber_feature
@@ -18,9 +11,7 @@ from runStore import run_store
 
 TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "TraficLib")
 sys.path.append(TRAFIC_LIB_DIR)
-print path.join(TRAFIC_LIB_DIR)
-from envInstallTF import runMaybeEnvInstallTF
-
+print (path.join(TRAFIC_LIB_DIR))
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
@@ -45,14 +36,13 @@ def parse_csv_input(filename):
         return array
 
 def fiber_preprocessing(input_fiber, deformation_field, output_fiber, parameters ):
-    print output_fiber
-    runMaybeEnvInstallTF()
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
     cli_dir = os.path.join(currentPath, "/", "cli-modules")
 
     polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
+    # lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
+    lm_ped = os.path.join('/root/trafic_data/datasetsJeffrey/clustered_landmarks.fcsv')
 
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
@@ -74,12 +64,6 @@ def fiber_preprocessing(input_fiber, deformation_field, output_fiber, parameters
 
 def main():
 
-    if FLAGS.input_csv != '':
-        input_list = logic.parse_csv_input(FLAGS.input_csv)
-        for row in input_list:
-            fiber_preprocessing(row[0], row[1], row[2])
-        return
-
     parameters = {
         'num_points'   : FLAGS.number_points,
         'num_landmarks': FLAGS.number_landmarks,
@@ -87,6 +71,13 @@ def main():
         'use_curvature': FLAGS.use_curvature,
         'use_torsion'  : FLAGS.use_torsion
     }
+
+    if FLAGS.input_csv != '':
+        input_list = logic.parse_csv_input(FLAGS.input_csv)
+        for row in input_list:
+            fiber_preprocessing(row[0], row[1], row[2], parameters)
+        return
+
 
     fiber_preprocessing(FLAGS.input,  FLAGS.displacement, FLAGS.output, parameters)
     

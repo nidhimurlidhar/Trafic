@@ -76,8 +76,8 @@ def run_store(train_dir='', valid_dir='', test_dir='', original_dir='', num_land
             print('Smote success !')
         dataset = dataset.reshape(len(dataset), nb_features, num_points)
 
-        len_validation = int(len(dataset) * 0.2)
-        len_testing = int(len(dataset) * 0.1)
+        len_validation = int(len(dataset) * 0.01)
+        len_testing = int(len(dataset) * 0.01)
         len_training = len(dataset) - (len_validation + len_testing)
 
         validation_set = data_set(len_training, nb_features, num_points)

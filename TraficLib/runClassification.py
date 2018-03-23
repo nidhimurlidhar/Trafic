@@ -155,7 +155,6 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
             coord.join(threads)
             break
         sess.close()
-        print(prediction)
 
         with open(os.path.join(checkpoint_dir, 'dataset_description.json')) as json_desc_file:
             json_string = json_desc_file.read()
@@ -163,6 +162,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
             description_dict['predictions'] = prediction
             
             with open(os.path.join(output_dir, 'classification_output.json'), 'w') as output_file:
+                print ('Writing output file')
                 output_json_string = json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': '))
                 output_file.write(output_json_string)
     end = time.time()
