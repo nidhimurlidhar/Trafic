@@ -71,24 +71,81 @@ Expected output: a tran.tfrecords file should have been created in your data dir
 * Expected output: your output directory should contain a checkpoint file and different tensorflow files.
 You can delete all the temporary folders that were used in the preprocessing stages
 
-
-
-### Biclassification from CLI
 ### Multiclassification from CLI
-Run the TraficMulti_cli.py script with the following parameters:
-#### Inputs parameters:
+Classification is mainly done through the TraficMulti_cli.py script. However, there are a few different options:
+By default, the script will do sampling, compute the fiber features and add them to a new temporary vtk file that will be used later for the classification.
+This works fine, bit this preprocessing step takes some time, and has to be repeated every time you want to classify the same file.
+To speed things up, you have the option to run the preprocessing of your fiber file only once, then specify this preprocessed fiber as input, which will cause the preprocessing to be skipped.
+For both of these options, you can use a csv file run the classification on multiple cases:
+#### Non preprocessed fiber file
+##### Input parameters:
 ```
 --input (Input fiber file to be classified)
 --displacement (Displacement field from input space to the training dataset's space)
---checkpoints (Directory containg the trained model - Tensorflow checkpoint files -)
+--landmarks (Path to the landmarks file)
+--checkpoint_dir (Directory containg the trained model - Tensorflow checkpoint files -)
 ```
+##### Output parameters:
+```
+--output_dir (Output directory)
+--summary (Log directory, optional)
+```
+
+##### CSV input
 Alternatively, you can specify parameters as a csv file, in which case the script should be called with the --input_csv flag.
 In the csv input file, each row should consist of the input parameters needed to classify one tract. The parameters should be ordered this way:
 ```
-fiber_file,output_directory,model_directory,summary_directory,displacement_field
+input, output_dir, checkpoint_dir, summary, displacement_field, landmarks
 ```
-#### Output parameters:
+
+
+
+#### Preprocessed fiber file
+##### Run the preprocessing
+In order to preprocess a fiber file, you should use the script fiber_preprocessing.py
+This script takes the following parameters:
+
+###### Input parameters:
 ```
---output (Output directory)
---summary (Log directory)
+--input (Input fiber file to be preprocessed)
+--displacement (Displacement field from input space to the training dataset's space)
+--landmarks (Path to the landmarks file)
+```
+Optional:
+```
+--number_points (Number of points to use for the sampling. Default: 50)
+--number_landmarks (Number of landmarks to use. Default: 32)
+--use_landmarks (Whether to use the landmarks in the features. Default: True)
+--use_curvature (Whether to use curvature in the features. Default: True)
+--use_torsion (Whether to use torsion in the features. Default: True)
+```
+###### Output parameters:
+```
+--output (Output preprocessed fiber file)
+--summary (Log directory, optional)
+```
+###### CSV input
+Alternatively, you can specify parameters as a csv file, in which case the script should be called with the --input_csv flag.
+In the csv input file, each row should consist of the input parameters needed to classify one tract. The parameters should be ordered this way:
+```
+input, output, displacement, landmarks
+```
+
+##### Classification of a preprocessed fiber file
+###### Input parameters:
+```
+--preprocessed_fiber (Input preprocessed fiber file to be classified)
+--checkpoint_dir (Directory containg the trained model - Tensorflow checkpoint files -)
+```
+###### Output parameters:
+```
+--output_dir (Output directory)
+--summary (Log directory, optional)
+```
+
+###### CSV input
+Alternatively, you can specify parameters as a csv file, in which case the script should be called with the --input_csv flag.
+In the csv input file, each row should consist of the input parameters needed to classify one tract. The parameters should be ordered this way:
+```
+preprocessed_fiber, output_dir, checkpoint_dir, summary
 ```

@@ -49,7 +49,7 @@ def run_pipeline_eval(data_file, output_dir, checkpoint_dir,  summary_dir, landm
     print ("---Creating features...")
     make_fiber_feature(data_file, tmp_file, landmark_file, num_landmarks=num_landmarks)
     print ("---Classifying Dataset...")
-    run_classification(tmp_dir, output_dir, checkpoint_dir, summary_dir, fiber_name=fiber_name)
+    run_classification(tmp_file, output_dir, checkpoint_dir, summary_dir, fiber_name=fiber_name)
 
   shutil.rmtree(tmp_dir)
 

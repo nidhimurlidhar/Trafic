@@ -1,10 +1,10 @@
 import numpy as np
 import os
-import tensorflow as tf
 from os import path, sys
 import subprocess
 import csv
 import sys
+import argparse
 
 from makeDataset import make_fiber_feature
 from runStore import run_store
@@ -13,30 +13,29 @@ TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "
 sys.path.append(TRAFIC_LIB_DIR)
 print (path.join(TRAFIC_LIB_DIR))
 
-flags = tf.app.flags
-FLAGS = flags.FLAGS
+parser = argparse.ArgumentParser()
+parser.add_argument('--input_csv', action='store', dest='input_csv', help='Input csv with each line being "input_fiber, output_fiber, deformation_field, landmarks file"', default='')
+parser.add_argument('--input', action='store', dest='input', help='Input fiber to preprocess', default='')
+parser.add_argument('--output', action='store', dest='output', help='Output preprocessed fiber file', default='')
+parser.add_argument('--displacement', action='store', dest='displacement', help= 'Displacement field to reference atlas', default='')
+parser.add_argument('--landmarks', action='store', dest='landmarks', help='landmarks file (.fcsv) for reference atlas', default='')
 
-flags.DEFINE_string('input', '', 'Input fiber to classify')
-flags.DEFINE_string('input_csv', '', 'Input csv with each line being "input_fiber, deformation_field, landmarks_file, output_fiber"')
-flags.DEFINE_string('output', '', 'Output fiber path')
-flags.DEFINE_string('landmarks', '', 'Landmarks file path')
-flags.DEFINE_string('displacement', '', 'Displacement field to atlas used for training')
-flags.DEFINE_integer('number_points', 50, 'Number of points to sample')
-flags.DEFINE_integer('number_landmarks', 32, 'Number of landmarks to use')
-flags.DEFINE_boolean('use_landmarks', True, 'Should landmarks be used')
-flags.DEFINE_boolean('use_curvature', True, 'Should curvature data be used')
-flags.DEFINE_boolean('use_torsion', True, 'Should torsion data be use')
+parser.add_argument('--number_points', type=int, action='store', dest='number_points', help='Number of points to sample', default=50)
+parser.add_argument('--number_landmarks', type=int, action='store', dest='number_landmarks', help='Number of landmarks to use', default=32)
 
+parser.add_argument('--no_landmarks', action='store_true', dest='no_landmarks', help='Should landmarks be used (true if flag not specified). Note that the training needs to be done with the same parameters')
+parser.add_argument('--no_curvature', action='store_true', dest='no_curvature', help='Should curvature be used (true if flag not specified). Note that the training needs to be done with the same parameters')
+parser.add_argument('--no_torsion', action='store_true', dest='no_torsion', help='Should torsion be used (true if flag not specified). Note that the training needs to be done with the same parameters')
 
 def parse_csv_input(filename):
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'r') as csvfile:
         input_list = csv.reader(csvfile)
         array = []
         for row in input_list:
             array.append(row)
         return array
 
-def fiber_preprocessing(input_fiber, deformation_field, landmarks, output_fiber, parameters ):
+def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks, parameters ):
     currentPath = os.path.dirname(os.path.abspath(__file__))
     env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
     cli_dir = os.path.join(currentPath, "/", "cli-modules")
@@ -66,22 +65,25 @@ def fiber_preprocessing(input_fiber, deformation_field, landmarks, output_fiber,
         curvOn=parameters['use_curvature'])
 
 def main():
-
+    args = parser.parse_args()
     parameters = {
-        'num_points'   : FLAGS.number_points,
-        'num_landmarks': FLAGS.number_landmarks,
-        'use_landmarks': FLAGS.use_landmarks,
-        'use_curvature': FLAGS.use_curvature,
-        'use_torsion'  : FLAGS.use_torsion
+        'num_points'   : args.number_points,
+        'num_landmarks': args.number_landmarks,
+        'use_landmarks': not args.no_landmarks,
+        'use_curvature': not args.no_curvature,
+        'use_torsion'  : not args.no_torsion
     }
 
-    if FLAGS.input_csv != '':
-        input_list = logic.parse_csv_input(FLAGS.input_csv)
+    if args.input_csv != '':
+        input_list = parse_csv_input(args.input_csv)
         for row in input_list:
-            fiber_preprocessing(row[0], row[1], row[2],  row[3], parameters)
+            if len(row) != 4:
+                print('Unable to read csv line, skipping...')
+                continue
+            fiber_preprocessing(input_fiber=row[0], output_fiber=row[1], deformation_field=row[2],  landmarks=row[3], parameters=parameters)
         return
 
-    fiber_preprocessing(FLAGS.input,  FLAGS.displacement, FLAGS.landmarks, FLAGS.output, parameters)
+    fiber_preprocessing(input_fiber=args.input,  output_fiber=args.output, deformation_field=args.displacement, landmarks=args.landmarks, parameters=parameters)
 
     
     return
