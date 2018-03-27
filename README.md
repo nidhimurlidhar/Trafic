@@ -74,9 +74,9 @@ You can delete all the temporary folders that were used in the preprocessing sta
 ### Multiclassification from CLI
 Classification is mainly done through the TraficMulti_cli.py script. However, there are a few different options:
 By default, the script will do sampling, compute the fiber features and add them to a new temporary vtk file that will be used later for the classification.
-This works fine, bit this preprocessing step takes some time, and has to be repeated every time you want to classify the same file.
+This works fine, but this preprocessing step takes some time, and has to be repeated every time you want to classify the same file.
 To speed things up, you have the option to run the preprocessing of your fiber file only once, then specify this preprocessed fiber as input, which will cause the preprocessing to be skipped.
-For both of these options, you can use a csv file run the classification on multiple cases:
+For both of these options, you can use a csv file to run the classification on multiple cases in one call:
 #### Non preprocessed fiber file
 ##### Input parameters:
 ```
@@ -148,4 +148,11 @@ Alternatively, you can specify parameters as a csv file, in which case the scrip
 In the csv input file, each row should consist of the input parameters needed to classify one tract. The parameters should be ordered this way:
 ```
 preprocessed_fiber, output_dir, checkpoint_dir, summary
+```
+#### Exploiting the classification output
+The classification script outputs a .json file containing class information for every tract. To use this information and get an .vtk file as output, you can use the extractClassifiedFibers.py script:
+```
+--class_data (JSON file comntaining the classification results)
+--input (VTK file containing the origin fiber tract used for the classification)
+--output_dir (Output directory)
 ```

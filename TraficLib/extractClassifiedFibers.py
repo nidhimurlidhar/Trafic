@@ -6,7 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--class_data', action='store', dest='class_data', help='JSON file comntaining the classification results', default='')
-parser.add_argument('--input_fiber', action='store', dest='input_fiber', help='VTK file containing the origin fiber tract used for the classification', default='')
+parser.add_argument('--input', action='store', dest='input_fiber', help='VTK file containing the origin fiber tract used for the classification', default='')
 parser.add_argument('--output_dir', action='store', dest='output_dir', help='Output directory', default='')
 
 
