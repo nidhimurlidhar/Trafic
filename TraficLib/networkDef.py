@@ -20,7 +20,6 @@ def variable_summaries(var, name):
     with tf.name_scope('summaries_'+ name):
         mean = tf.reduce_mean(var)
         tf.scalar_summary('mean_' + name, mean)
-        #with tf.name_scope('stddev'):
         stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
         tf.scalar_summary('stddev_' + name, stddev)
         tf.scalar_summary('max_' + name, tf.reduce_max(var))
@@ -48,10 +47,6 @@ def inference(train_data, num_hidden, num_labels, is_training, num_layers, reuse
     layer4 = tf.layers.dense(inputs=layer3, name='layer3', units=1024, activation=tf.nn.relu, reuse=reuse)
     layer5 = tf.layers.dense(inputs=layer4, name='layer4', units=1024, activation=tf.nn.relu, reuse=reuse)
     layer6 = tf.layers.dense(inputs=layer5, name='layer5', units=512, activation=tf.nn.relu, reuse=reuse)
-    
-    # if num_layers > 1:
-    #     for i in xrange(1,num_layers):
-    #         layer = tf.layers.dense(inputs=layer, name='layer' + str(i), units=num_hidden, activation=tf.nn.relu)
 
     dropout = tf.layers.dropout(inputs=layer6, name='dropout', rate=0.5, training=is_training)
     final = tf.layers.dense(inputs=dropout, name='final', units=num_labels, activation=None)
@@ -92,7 +87,6 @@ def read_and_decode(filename_queue, label_type_int64):
           'fiber_raw': tf.FixedLenFeature([], tf.string),
           'label': tf.FixedLenFeature([], tf.string),
       })
-    # Convert from a scalar string tensor (whose single string has
 
     fiber = tf.decode_raw(features['fiber_raw'], tf.float64)
     fiber = tf.cast(fiber, tf.float32)
@@ -105,21 +99,6 @@ def read_and_decode(filename_queue, label_type_int64):
     return fiber, label
 
 def inputs(dir,  batch_size, num_epochs, conv=False):
-    """Reads input data num_epochs times.
-    Args:
-    train: Selects between the training (True) and validation (False) data.
-    batch_size: Number of examples per returned batch.
-    num_epochs: Number of times to read the input data, or 0/None to
-       train forever.
-    Returns:
-    A tuple (images, labels), where:
-    * images is a float tensor with shape [batch_size, mnist.IMAGE_PIXELS]
-      in the range [-0.5, 0.5].
-    * labels is an int32 tensor with shape [batch_size] with the true label,
-      a number in the range [0, mnist.NUM_CLASSES).
-    Note that an tf.train.QueueRunner is added to the graph, which
-    must be run using e.g. tf.train.start_queue_runners().
-    """
 
     if not num_epochs:
         num_epochs = None
@@ -184,145 +163,16 @@ def evaluation (logits, labels, batch_size):
     print ("")
     print_tensor_shape(labels, "labels")
     print_tensor_shape(logits, "logits")
-    size = 100/batch_size # = 100*(1/batch_size)
+    size = 100/batch_size
 
-    # _, eval = tf.nn.top_k(logits, k=1)
     eval = tf.nn.in_top_k(logits, labels, k=1)
-    # eval = tf.cast(eval, dtype=tf.int8)
     eval = tf.reshape(eval, [-1])
     print_tensor_shape(eval, "eval")
-    # num_true = tf.where(eval)
     non_zero = tf.count_nonzero(eval)
-    # print_tensor_shape(non_zero, "non_zero")
     acc = tf.scalar_mul(size, non_zero)
-    # print_tensor_shape(acc, "acc")
     return acc
 
 def print_tensor_shape(tensor, string):
 # input: tensor and string to describe it
     if __debug__:
         print('DEBUG ' + string, tensor.get_shape())
-
-
-# def inference_conv(train_data, patch_size, num_features, num_points, num_hidden, num_labels, is_training):
-#     # Variables.
-#     # print "data", data.get_shape()
-#     train_data = tf.cast(train_data, tf.float32)
-#     depth = 100
-#     w_1 = tf.Variable(tf.truncated_normal(
-#         [patch_size, num_features, num_features], stddev=0.1, dtype=tf.float32))
-#     # b_1 = tf.Variable(tf.zeros([num_points]))
-#     w_1_2 = tf.Variable(tf.truncated_normal(
-#         [patch_size, num_features, depth], stddev=0.1, dtype=tf.float32))
-
-#     w_2 = tf.Variable(tf.truncated_normal(
-#         [patch_size, depth, depth], stddev=0.1, dtype=tf.float32))
-#     b_2 = tf.Variable(tf.constant(1.0, shape=[num_points]))
-
-#     w_3 = tf.Variable(tf.truncated_normal(
-#         [patch_size, patch_size, depth/2, depth], stddev=0.1, dtype=tf.float32))
-
-#     w_3_1 = tf.Variable(tf.truncated_normal(
-#         [patch_size, patch_size, depth, depth], stddev=0.1, dtype=tf.float32))
-
-#     # w_4 = tf.Variable(tf.truncated_normal(
-#     #     [depth * depth, num_hidden], stddev=0.1))
-#     # w_4 = tf.Variable(tf.truncated_normal(
-#     #     [num_points * depth, num_hidden], stddev=0.1))
-#     w_4 = tf.Variable(tf.truncated_normal(
-#         [num_points * depth, num_hidden], stddev=0.1, dtype=tf.float32))
-#     b_4 = tf.Variable(tf.constant(1.0, shape=[num_hidden], dtype=tf.float32))
-#     w_final = tf.Variable(tf.truncated_normal(
-#         [num_hidden, num_labels], stddev=0.1, dtype=tf.float32))
-#     b_final = tf.Variable(tf.constant(1.0, shape=[num_labels], dtype=tf.float32))
-
-#     # Model.
-#     def model(data):
-#         with tf.name_scope('Layer1'):
-#             data = batch_norm(data, is_training)
-#             # data = tf.expand_dims(data, 3)
-#             conv = tf.nn.conv1d(data, w_1, 1, padding='SAME', data_format="NCHW")
-#             print "conv:", conv.get_shape()
-#             # hidden = tf.nn.relu(conv + b_1)
-#             hidden = tf.nn.relu(conv)
-#             # hidden = batch_norm(hidden, num_points)
-#             print "hidden:", hidden.get_shape()
-
-#         with tf.name_scope('Layer2'):
-#             # hidden = batch_norm(hidden, is_training)
-#             conv = tf.nn.conv1d(hidden, w_1_2, 1, padding='SAME', data_format="NCHW")
-#             print "conv:", conv.get_shape()
-#             hidden = tf.nn.relu(conv)
-#             print "hidden:", hidden.get_shape()
-
-#         # with tf.name_scope('Layer3'):
-#         #     # hidden = batch_norm(hidden, is_training)
-#         #     hidden = tf.expand_dims(hidden, 3)
-#         #     conv = tf.nn.conv2d(hidden, w_3, [1, 1, 1, 1], padding='SAME', data_format="NCHW")
-#         #     print "conv:", conv.get_shape()
-#         #     hidden = tf.nn.relu(conv)
-#         #     print "hidden:", hidden.get_shape()
-
-#         # with tf.name_scope('Layer4'):
-#             # conv = tf.nn.conv1d(hidden, w_2, 1, padding='SAME', data_format="NCHW")
-#             # print "conv:", conv.get_shape()
-#             # hidden = tf.nn.relu(conv)
-#             # print "hidden:", hidden.get_shape()
-
-#         # with tf.name_scope('Layer5'):
-#             # conv = tf.nn.conv2d(hidden, w_3_1, [1, 1, 1, 1], padding='SAME', data_format="NCHW")
-#             # print "conv:", conv.get_shape()
-#             # hidden = tf.nn.relu(conv)
-#             # print "hidden:", hidden.get_shape()
-
-#         # with tf.name_scope('Layer6'):
-#             # conv = tf.nn.conv1d(hidden, w_3, 1, padding='SAME')
-#             # print "conv:", conv.get_shape()
-#             # hidden = tf.nn.relu(conv)
-#             # print "hidden:", hidden.get_shape()
-
-#         # with tf.name_scope('Layer7'):
-#             # conv = tf.nn.conv1d(hidden, w_2, 1, padding='SAME')
-#             # print "conv:", conv.get_shape()
-#             # hidden = tf.nn.relu(conv)
-#             # print "hidden:", hidden.get_shape()
-#         with tf.name_scope('LastLayer'):
-#             # hidden = tf.squeeze(hidden, [3])
-#             # hidden = batch_norm(hidden, is_training)
-#             shape = hidden.get_shape().as_list()
-#             print "shape", shape
-#             reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2]])
-#             hidden = tf.nn.relu(tf.matmul(reshape, w_4) + b_4)
-#         # hidden = batch_norm(hidden, num_hidden)
-#         # hidden = batch_norm(hidden, is_training)
-#         return tf.matmul(hidden, w_final) + b_final
-
-#     logits = model(train_data)
-
-#     return logits #, valid, saver
-# #     with tf.name_scope('Hidden1'):
-# #         w_1 = tf.Variable(
-# #             tf.truncated_normal([num_data, num_hidden]), name='w_1')
-# #         b_1 = tf.Variable(tf.zeros([num_hidden]), name='b_1')
-# #         h_final = tf.nn.relu(tf.matmul(train_data, w_1) + b_1)
-# #
-# #     # with tf.name_scope('Hidden2'):
-# #     #     w_2 = tf.Variable(
-# #     #         tf.truncated_normal([num_hidden, num_hidden]), name='w_2')
-# #     #     b_2 = tf.Variable(tf.zeros([num_hidden]), name='b_2')
-# #     #     h_final = tf.nn.relu(tf.matmul(h_1, w_2) + b_2)
-# #
-# #     with tf.name_scope('Final'):
-# #         w_final = tf.Variable(
-# #             tf.truncated_normal([num_hidden, num_labels]), name='w_final')
-# #         b_final = tf.Variable(tf.zeros([num_labels]), name='b_final')
-# #         logits = tf.matmul(h_final, w_final) + b_final
-# #     # tf.histogram_summary("Logits", logits)
-# #
-# #     saver = tf.train.Saver({"w_1": w_1, "b_1": b_1, "w_final": w_final, "b_final": b_final}, max_to_keep=10000)
-# #
-# #     if valid_data is not None:
-# #         valid = tf.matmul(tf.nn.relu(tf.matmul(valid_data, w_1) + b_1), w_final) + b_final
-# #     else:
-# #         valid = None
-# #     return logits, valid, saver
