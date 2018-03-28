@@ -15,18 +15,18 @@ NC = "\033[0m"
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_float('learning_rate', 0.000001, 'Initial learning rate.')
-flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to run trainer.')
-flags.DEFINE_integer('num_hidden', 1024, 'Size of hidden layers. Not currently in use')
-flags.DEFINE_integer('num_layers', 3, 'Number of layers. Not currently in use')
+flags.DEFINE_integer('number_epochs', 3, 'Number of epochs to run trainer.')
+flags.DEFINE_integer('number_hidden', 1024, 'Size of hidden layers. Not currently in use')
+flags.DEFINE_integer('number_layers', 3, 'Number of layers. Not currently in use')
 flags.DEFINE_integer('batch_size', 5, 'Batch size.')
-flags.DEFINE_string('data_dir', '',
+flags.DEFINE_string('input_dir', '',
                     'Directory with the training data.')
 flags.DEFINE_string('checkpoint_dir', '',
                     """Directory where to write model checkpoints.""")
-flags.DEFINE_string('summary_dir', '',
+flags.DEFINE_string('summary', '',
                     """Directory where to write summary.""")
 
-def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_rate=0.000001, batch_size=5, num_hidden=1024, num_layers=3):
+def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_rate=0.000001, batch_size=5, number_hidden=1024, number_layers=3):
     
     num_classes = 0
 
@@ -34,7 +34,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
     if not os.path.isdir(checkpoint_dir):
         os.makedirs(checkpoint_dir)
 
-    shutil.copy(os.path.join(data_dir, 'dataset_description.json'), os.path.join(checkpoint_dir, 'dataset_description.json'))
+    shutil.copy(os.path.join(input_dir, 'dataset_description.json'), os.path.join(checkpoint_dir, 'dataset_description.json'))
 
     description_dict = {}
     ## output json description file
@@ -50,7 +50,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         torsOn = store_params['torsOn']
         num_features = num_landmarks * int(lmOn) + int(curvOn) + int(torsOn)
     with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'w') as json_desc_file:
-        training_parameters = {'nb_layers' : num_layers, 'batch_size' : batch_size, 'num_epochs' : num_epochs, 'num_hidden' : num_hidden, 'input_dataset' : data_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary_dir}
+        training_parameters = {'nb_layers' : number_layers, 'batch_size' : batch_size, 'number_epochs' : number_epochs, 'number_hidden' : number_hidden, 'input_dataset' : input_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary}
         description_dict['training_parameters'] = training_parameters
         json_desc_file.write(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
@@ -60,40 +60,22 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
     # construct the graph
     with tf.Graph().as_default():
 
-        # specify the training data file location
-
-        # read the images and labels
-
+        ## Output json configuration to tensorboard
         string_tensor = tf.constant(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')).replace('\n', '  \n').replace('    ', '&nbsp;&nbsp;&nbsp;&nbsp;'))
         tf.summary.text('parameters', string_tensor)
-        ## NoConv
-        fibers, labels = nn.inputs(data_dir, batch_size=batch_size, num_epochs=num_epochs, conv=False)
 
-        # fibers = tf.placeholder(tf.int32,shape=(batch_size, num_features))
-        # labels = tf.placeholder(tf.int32, shape=(batch_size, num_classes))
-        
-        # with tf.variable_scope("model") as scope:
-
-        results = nn.inference(fibers, num_hidden, num_classes, is_training=True, num_layers=num_layers)
-
-        # with tf.variable_scope(scope, reuse=True):
-            # results_valid = nn.inference(fibers, num_hidden, num_classes, is_training=True, num_layers=num_layers)
-
-        # validation_results = nn.inference(validation_fibers, num_hidden, num_classes, is_training=False, num_layers=num_layers, reuse=True)
-
-        # ### Conv
-        # fibers, labels = nn.inputs(data_dir, 'train', batch_size=batch_size, num_epochs=num_epochs, conv=True)
-        # results = nn.inference_conv(fibers, 2, 34, 50, num_hidden, num_classes, is_training=True)
-
+        # Define inputs
+        fibers, labels = nn.inputs(input_dir, batch_size=batch_size, num_epochs=number_epochs, conv=False)
         labels = tf.reshape(labels, [-1])
-        # labels = tf.Print(labels, [labels])
-        # calculate the loss from the results of inference and the labels
+        
+        # Define the network
+        results = nn.inference(fibers, number_hidden, num_classes, is_training=True, num_layers=number_layers)
+
+        # Define metrics
         loss = nn.loss(results, labels)
-
         accuracy = nn.accuracy(results, labels)
-        # validation_accuracy = nn.accuracy(validation_results, validation_labels)
 
-        # setup the training operations
+        # Setup the training operations
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             train_op = nn.training(loss, learning_rate)
@@ -112,7 +94,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
         sess = tf.Session()
 
         # specify where to write the log files for import to TensorBoard
-        summary_writer = tf.summary.FileWriter(os.path.join(summary_dir,datetime.now().strftime("%Y%m%d-%H%M%S")),
+        summary_writer = tf.summary.FileWriter(os.path.join(summary,datetime.now().strftime("%Y%m%d-%H%M%S")),
                                                 graph=sess.graph)
 
         # initialize the graph
@@ -131,8 +113,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
                 # start time and run one training iteration
                 start_time = time.time()
-                # ev_fibers, ev_labels = sess.run([tf_fibers, tf_labels])
-                _, loss_value, accuracy_value = sess.run([train_op, loss, accuracy])#, feed_dict ={fibers: ev_fibers, labels: ev_labels})
+                _, loss_value, accuracy_value = sess.run([train_op, loss, accuracy])
                 duration = time.time() - start_time
 
                 if step % 50 == 0:
@@ -157,7 +138,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
                 # quit after we run out of input files to read
         except tf.errors.OutOfRangeError:
-            print('Done training for %d epochs, %d steps.' % (num_epochs,
+            print('Done training for %d epochs, %d steps.' % (number_epochs,
                                                               step))
             checkpoint_path = os.path.join(checkpoint_dir,
                                            'model.ckpt')
@@ -173,7 +154,7 @@ def run_training(data_dir, checkpoint_dir, summary_dir, num_epochs=3, learning_r
 
 def main(_):
     start = time.time()
-    run_training(FLAGS.data_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.num_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.num_hidden, FLAGS.num_layers)
+    run_training(FLAGS.input_dir, FLAGS.checkpoint_dir, FLAGS.summary, FLAGS.number_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.number_hidden, FLAGS.number_layers)
     end = time.time()
     print("Training Process took %dh%02dm%02ds" % (convert_time(end - start)))
 

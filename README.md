@@ -9,67 +9,21 @@ Trafic is a program that performs classification of tract fibers using deep lear
 * ITK (v4.7 and above)
 * VTK (v6.1.0 and above)
 * SlicerExecutionModel
+
 ### Software
 * polydatatransform (part of niral_utilities)
+
 ### Notes
 * Have +4GiB free of ram to run the program
-* Have an algorithm to compute atlas-registration (e.g: DTI-Reg) to obtain the displacement field
 
 ## LICENSE
 see LICENSE
 
 ## CLI Instructions
-Trafic is a CLI application
+Trafic is a python application.
+It should be run from within a Docker container in which Tensorflow has been installed, ideally with python3 and GPU access.
+A Dockerfile is provided in Docker/Dockerfile to build the rest of the image
 
-### Training from CLI
-#### Preprocessing
-Before training the model, you need to create the dataset that Trafic will use
-
-Your data should be organized like this architecture:
-```
-...
-atlas1/fiber_name1/fiber_name1.vtk
-atlas1/fiber_name2/fiber_name2.vtk
-atlas1/fiber_name3/fiber_name3.vtk
-...
-atlas2/fiber_name1/fiber_name1.vtk
-atlas2/fiber_name2/fiber_name2.vtk
-atlas2/fiber_name3/fiber_name3.vtk
-...
-```
-You can train against multiple datasets, but you need to have a displacement field from one of these datasets to all the others. This dataset should be the one for which you have a landmarks file.
-
-For each dataset: 
-* Transform the landmarks file with the displacement field to this particular dataset's space using polydatatransform (from NiralUser/niral_utilities):
-```
-polydatatransform --invertx --inverty --fiber_file [path_to_landmarks_file.fcsv] -D [path_to_displacement_field.nrrd] -o [path_to_output_landmarks_file.fcsv]
-```
-* Check that the transformed landmarks are correct using a visualisation tool such as Slicer
-* run makeDataset.py with the following parameters:
-```
---input_folder : this dataset's directory
---output_folder : output directory, should be the same for all your datasets
---landmark_file : landmarks file for this particular dataset
---num_landmarks : number of landmarks
-```
-#### Creating the tensorflow dataset
-* use the runStore.py script using the following parameters: 
-```
---train_dir : the folder you used as output from makeDataset.py
---num_landmarks : number of landmarks
-```
-Expected output: a tran.tfrecords file should have been created in your data directory. If it's not present, check that tensorflow has been properly installed
-
-#### Training using the newly created tfrecords
-* use the runtraining.py script using the following parameters:
-```
---data_dir as the directory containing you .tfrecords file
---checkpoint_dir as the final output directory, where you trained model will be stored
---summary_dir as a log directory
-```
-* use the --multiclass flag if you want to train for multiclassification
-* Expected output: your output directory should contain a checkpoint file and different tensorflow files.
-You can delete all the temporary folders that were used in the preprocessing stages
 
 ### Multiclassification from CLI
 Classification is mainly done through the TraficMulti_cli.py script. However, there are a few different options:
@@ -77,6 +31,7 @@ By default, the script will do sampling, compute the fiber features and add them
 This works fine, but this preprocessing step takes some time, and has to be repeated every time you want to classify the same file.
 To speed things up, you have the option to run the preprocessing of your fiber file only once, then specify this preprocessed fiber as input, which will cause the preprocessing to be skipped.
 For both of these options, you can use a csv file to run the classification on multiple cases in one call:
+
 #### Non preprocessed fiber file
 ##### Input parameters:
 ```
@@ -98,8 +53,6 @@ In the csv input file, each row should consist of the input parameters needed to
 input, output_dir, checkpoint_dir, summary, displacement_field, landmarks
 ```
 
-
-
 #### Preprocessed fiber file
 ##### Run the preprocessing
 In order to preprocess a fiber file, you should use the script fiber_preprocessing.py
@@ -115,9 +68,9 @@ Optional:
 ```
 --number_points (Number of points to use for the sampling. Default: 50)
 --number_landmarks (Number of landmarks to use. Default: 32)
---use_landmarks (Whether to use the landmarks in the features. Default: True)
---use_curvature (Whether to use curvature in the features. Default: True)
---use_torsion (Whether to use torsion in the features. Default: True)
+--no_landmarks (Don't add the landmarks to the features)
+--no_curvature (Don't add curvature to the features)
+--no_torsion (Don't add torsion to the features)
 ```
 ###### Output parameters:
 ```
@@ -156,3 +109,75 @@ The classification script outputs a .json file containing class information for 
 --input (VTK file containing the origin fiber tract used for the classification)
 --output_dir (Output directory)
 ```
+
+
+### Training from CLI
+#### Preprocessing
+Before training the model, you need to create the dataset that Trafic will use
+
+Your data should be organized like this:
+```
+...
+atlas1/fiber_name1/fiber_name1.vtk
+atlas1/fiber_name2/fiber_name2.vtk
+atlas1/fiber_name3/fiber_name3.vtk
+...
+atlas2/fiber_name1/fiber_name1.vtk
+atlas2/fiber_name2/fiber_name2.vtk
+atlas2/fiber_name3/fiber_name3.vtk
+...
+```
+You can train against multiple datasets, but you need to have a displacement field from one of these datasets to all the others. This dataset should be the one for which you have a landmarks file.
+
+For each dataset: 
+* Transform the landmarks file with the displacement field to this particular dataset's space using polydatatransform (from NiralUser/niral_utilities):
+```
+polydatatransform --invertx --inverty --fiber_file [path_to_landmarks_file.fcsv] -D [path_to_displacement_field.nrrd] -o [path_to_output_landmarks_file.fcsv]
+```
+* Check that the transformed landmarks are correct using a visualisation tool such as Slicer
+* run makeDataset.py with the following parameters:
+```
+--input_dir : this dataset's directory
+--output_dir : output directory, should be the same for all your datasets
+--landmarks : landmarks file for this particular dataset
+```
+Optional:
+```
+--number_points (Number of points to use for the sampling. Default: 50)
+--number_landmarks (Number of landmarks to use. Default: 32)
+--no_landmarks (Don't add the landmarks to the features)
+--no_curvature (Don't add curvature to the features)
+--no_torsion (Don't add torsion to the features)
+```
+#### Creating the tensorflow dataset
+* use the runStore.py script using the following parameters: 
+```
+--input_dir : the folder you used as output from makeDataset.py
+```
+Optional:
+```
+--number_points (Number of points to use for the sampling. Default: 50)
+--number_landmarks (Number of landmarks to use. Default: 32)
+--no_landmarks (Don't add the landmarks to the features)
+--no_curvature (Don't add curvature to the features)
+--no_torsion (Don't add torsion to the features)
+```
+Expected output: a train.tfrecords file should have been created in your data directory. If it's not present, check that tensorflow has been properly installed
+
+#### Training using the newly created tfrecords
+* use the runtraining.py script using the following parameters:
+```
+--input_dir as the directory containing your .tfrecords file
+--checkpoint_dir as the checkpoint output directory, where your trained model will be stored
+--summary as a log directory
+```
+Optional:
+```
+--learning_rate  (Initial learning rate)
+--number_epochs (Number of epochs)
+--batch_size (Batch size)
+--number_hidden (Size of hidden layers. Not currently in use)
+--number_layers (Number of layers. Not currently in use)
+```
+* Expected output: your output directory should contain a checkpoint file and different tensorflow files.
+You can delete all the temporary folders that were used in the preprocessing stages
