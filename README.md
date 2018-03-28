@@ -26,7 +26,7 @@ A Dockerfile is provided in Docker/Dockerfile to build the rest of the image
 
 
 ### Multiclassification from CLI
-Classification is mainly done through the TraficMulti_cli.py script. However, there are a few different options:
+Classification is mainly done through the TraficMulti.py script. However, there are a few different options:
 By default, the script will do sampling, compute the fiber features and add them to a new temporary vtk file that will be used later for the classification.
 This works fine, but this preprocessing step takes some time, and has to be repeated every time you want to classify the same file.
 To speed things up, you have the option to run the preprocessing of your fiber file only once, then specify this preprocessed fiber as input, which will cause the preprocessing to be skipped.

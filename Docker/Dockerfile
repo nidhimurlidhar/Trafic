@@ -1,10 +1,15 @@
-#FROM tensorflow/tensorflow
-FROM gcr.io/tensorflow/tensorflow:latest-devel-gpu
+FROM tensorflow/tensorflow:1.5.0-gpu-py3
 
 WORKDIR "/"
 
+RUN apt-get update
+
+## install vtk for python and dependencies
+RUN pip3 install vtk
+RUN apt-get install -y libsm6 libxt6 libxext6
+
 ## install git and cmake
-RUN apt-get update && apt-get install -y --no-install-recommends git cmake libgl1-mesa-glx
+RUN apt-get install -y --no-install-recommends git cmake #libgl1-mesa-glx
 
 ## clone trafic
 RUN git clone https://github.com/Adbook/Trafic.git #TODO: change from fork
@@ -12,16 +17,7 @@ RUN ls /
 RUN ls /Trafic
 
 ## install dependencies and setup the environment
-RUN bash /Trafic/TraficLib/Resources/envInstallTFLinux.sh /Trafic 2.7 64
-
-RUN bash /Trafic/Docker/setup_docker.sh
-RUN /Trafic/miniconda2/bin/conda install -y libglu
-RUN /Trafic/miniconda2/bin/conda install -y libsm-cos6-x86_64
-RUN ln -s /Trafic/miniconda2/envs/env_trafic/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib64/libSM.so.6 /Trafic/miniconda2/envs/env_trafic/lib/libSM.so.6
-RUN /Trafic/miniconda2/bin/conda install -y libice-cos6-x86_64
-RUN ln -s /Trafic/miniconda2/envs/env_trafic/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib64/libICE.so.6 /Trafic/miniconda2/envs/env_trafic/lib/libICE.so.6
-RUN /Trafic/miniconda2/bin/conda install -y libXt-cos6-x86_64
-RUN ln -s /Trafic/miniconda2/envs/env_trafic/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib64/libXt.so.6 /Trafic/miniconda2/envs/env_trafic/lib/libXt.so.6
+RUN pip3 install imblearn
 
 ## build bin utilities
 RUN mkdir /builds /utils
