@@ -57,4 +57,6 @@ RUN cmake /Trafic -DUSE_SYSTEM_VTK:BOOL=TRUE  -DUSE_SYSTEM_ITK:BOOL=TRUE  -DUSE_
 # copy all cli tools used by trafic in the cli-modules directory
 RUN mkdir /cli-modules
 RUN cp /builds/trafic_build/Trafic-build/CLI/cxx/fiber*/bin/* /cli-modules
+RUN cp /builds/trafic_build/Trafic-build/CLI/cxx/createLandmarks/bin/* /cli-modules
 RUN ln -s /builds/niral_utilities_build/bin/polydatatransform /cli-modules/polydatatransform
+ENV PATH "$PATH:/cli-modules"

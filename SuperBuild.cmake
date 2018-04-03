@@ -58,7 +58,7 @@ endif()
 #include(${QT_USE_FILE})
 
 option(USE_SYSTEM_VTK "Build using an externally defined version of VTK" OFF)
-option(USE_SYSTEM_ITKv4 "Build using an externally defined version of ITKv4" OFF)
+option(USE_SYSTEM_ITK "Build using an externally defined version of ITKv4" OFF)
 option(USE_SYSTEM_SlicerExecutionModel "Build using an externally defined version of SlicerExecutionModel" OFF)
 option(USE_SYSTEM_niral_utilities "Build using an externally defined version of niral_utilities" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
