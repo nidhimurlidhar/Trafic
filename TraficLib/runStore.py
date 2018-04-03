@@ -40,7 +40,7 @@ def read_training(input_dir, num_landmarks, num_points, landmarks, curvature, to
     permutation = np.random.permutation(len(dataset))
     return np.array(dataset)[permutation], np.array(labels)[permutation], fiber_names
 
-def read_testing(fiber_file, src_dir, num_landmarks, num_points, landmarks, curvature, torsion):
+def read_testing(fiber_file, num_landmarks, num_points, landmarks, curvature, torsion):
     try:
         data_fiber, data_name = fiber_extract_feature(fiber_file, landmarks, curvature, torsion,
             num_landmarks, num_points, os.path.splitext(fiber_file)[0], train=False)

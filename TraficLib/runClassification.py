@@ -11,11 +11,11 @@ from fiberfileIO import *
 
 import shutil
 
-from runStore import run_store
+from runStore import read_testing
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_string('data_dir', '',
+flags.DEFINE_string('data_file', '',
                     'Directory with the training data.')
 flags.DEFINE_string('output_dir', '/root/work/Multiclass/Results/',
                     'Output directory')
@@ -43,7 +43,7 @@ def fibername_split(fibername):
         raise Exception("Non valid format for the file %s. "
                         "Impossible to extract name and index of the fiber" % fibername)
 
-def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_name="Fiber", conv=False):
+def run_classification(data_file, output_dir, checkpoint_dir, summary_dir, fiber_name="Fiber", conv=False):
     # Run evaluation on the input data set
 
     print (output_dir)
@@ -83,7 +83,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
         # Non Conv Version
 
         if not conv:
-            fibers, labels = run_store(test_dir=data_dir, num_landmarks=num_landmarks, num_points=num_points, lmOn=lmOn, curvOn=curvOn, torsOn=torsOn, use_smote=False)
+            fibers, labels = read_testing(fiber_file=data_file, num_landmarks=num_landmarks, num_points=num_points, landmarks=lmOn, curvature=curvOn, torsion=torsOn)
             fibers = fibers.reshape(len(fibers), num_points * num_features)
             fibers = tf.convert_to_tensor(fibers, dtype=tf.float32)
             labels = tf.convert_to_tensor(labels, dtype=tf.string)           
@@ -94,7 +94,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
 
         # Conv Version
         else:
-            fibers, labels = nn.inputs(data_dir, 'test', batch_size=1,
+            fibers, labels = nn.inputs(data_file, 'test', batch_size=1,
                                       num_epochs=1, conv=True)
 
             logits = nn.inference_conv(fibers, 2, 34, 50, num_hidden, num_classes, is_training=False)
@@ -169,7 +169,7 @@ def run_classification(data_dir, output_dir, checkpoint_dir, summary_dir, fiber_
 
 def main(_):
     start = time.time()
-    run_classification(FLAGS.data_dir, FLAGS.output_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.fiber_name, FLAGS.conv)
+    run_classification(FLAGS.data_file, FLAGS.output_dir, FLAGS.checkpoint_dir, FLAGS.summary_dir, FLAGS.fiber_name, FLAGS.conv)
     end = time.time()
     print (YELLOW, "Classification Process took %dh%02dm%02ds" % (convert_time(end - start)), NC)
 

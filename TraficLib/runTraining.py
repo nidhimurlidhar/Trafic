@@ -50,7 +50,7 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
         torsOn = store_params['torsOn']
         num_features = num_landmarks * int(lmOn) + int(curvOn) + int(torsOn)
     with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'w') as json_desc_file:
-        training_parameters = {'nb_layers' : number_layers, 'batch_size' : batch_size, 'number_epochs' : number_epochs, 'number_hidden' : number_hidden, 'input_dataset' : input_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary}
+        training_parameters = {'nb_layers' : number_layers, 'batch_size' : batch_size, 'num_epochs' : number_epochs, 'num_hidden' : number_hidden, 'input_dataset' : input_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary}
         description_dict['training_parameters'] = training_parameters
         json_desc_file.write(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
