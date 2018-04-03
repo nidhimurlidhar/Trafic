@@ -96,7 +96,7 @@ def run_store(input_dir='', num_landmarks=32, num_points=50, lmOn=True, curvOn=T
 
 def main():
     args = parser.parse_args()    
-    run_store(input_dir=args.input_dir, num_landmarks=args.number_landmarks, num_points=args.number_points, lmOn=not args.no_landmarks, curvOn=not args.no_curvature, torsOn=not args.no_torsion, use_smote=args.use_smote)
+    run_store(input_dir=args.input_dir, num_landmarks=args.number_landmarks, num_points=args.number_points, lmOn=not args.no_landmarks, curvOn=not args.no_curvature, torsOn=not args.no_torsion, use_smote=not args.use_smote)
   # Get the data.
 
 
