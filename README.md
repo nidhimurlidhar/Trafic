@@ -11,7 +11,7 @@ Trafic is a program that performs classification of tract fibers using deep lear
 * SlicerExecutionModel
 
 ### Software
-* polydatatransform (part of niral_utilities)
+* docker or nvidia-docker
 
 ### Notes
 * Have +4GiB free of ram to run the program
@@ -22,7 +22,14 @@ see LICENSE
 ## CLI Instructions
 Trafic is a python application.
 It should be run from within a Docker container in which Tensorflow has been installed, ideally with python3 and GPU access.
-A Dockerfile is provided in Docker/Dockerfile to build the rest of the image
+A Dockerfile is provided in Docker/Dockerfile to build the rest of the image:
+```
+nvidia-docker build Trafic/Docker -t Trafic:Trafic
+```
+Then to create a container and run it:
+```
+nvidia-docker run -v /volume1/to/mount:/target1/in/container -v /volume2/to/mount:/target2/in/container -it IMAGE_NAME /bin/bash
+```
 
 
 ### Multiclassification from CLI
@@ -127,7 +134,7 @@ atlas2/fiber_name2/fiber_name2.vtk
 atlas2/fiber_name3/fiber_name3.vtk
 ...
 ```
-You can train against multiple datasets, but you need to have a displacement field from one of these datasets to all the others. This dataset should be the one for which you have a landmarks file.
+You can train against multiple datasets, but you need to have a displacement field from one of these datasets to all the others. This dataset should be the one for which you have a landmarks file. To create the landmarks file, jump to the relevant section below
 
 For each dataset: 
 * Transform the landmarks file with the displacement field to this particular dataset's space using polydatatransform (from NiralUser/niral_utilities):
@@ -181,3 +188,22 @@ Optional:
 ```
 * Expected output: your output directory should contain a checkpoint file and different tensorflow files.
 You can delete all the temporary folders that were used in the preprocessing stages
+
+### Landmarks extraction and clustering
+Trafic uses distance to certain landmarks as part of the features for training and classification. This means that you need to generate a list of landmarks for your atlas before training/classification
+There are two steps to this process:
+
+#### Extraction
+To extract all potential landmarks, you should use the createLandmarks tool, with the following parameters:
+```
+-i, --input_fiber_list (the path to a csv file containing the list of all the .vtk files from which you need landmarks)
+-o, --output_landmarks_full (where to output the full landmarks file)
+--num_landmarks (the number of landmarks that you wish to generate per fiber, defaults to 5)
+```
+#### Clustering
+You have extracted all the potential landmarks, now you need to reduce their number by clustering.
+To do this, use the script located at Trafic/CLI/cxx/createLandmarks/clusterLandmarks.py with the following parameters:
+```
+--input (The .fcsv file you generated in the previous step)
+--output (The output .fcsv file that will be generated after clustering)
+```

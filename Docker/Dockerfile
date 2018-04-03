@@ -9,12 +9,10 @@ RUN pip3 install vtk
 RUN apt-get install -y libsm6 libxt6 libxext6
 
 ## install git and cmake
-RUN apt-get install -y --no-install-recommends git cmake #libgl1-mesa-glx
+RUN apt-get install -y --no-install-recommends git cmake
 
 ## clone trafic
-RUN git clone https://github.com/Adbook/Trafic.git #TODO: change from fork
-RUN ls /
-RUN ls /Trafic
+RUN git clone https://github.com/Adbook/Trafic.git
 
 ## install dependencies and setup the environment
 RUN pip3 install imblearn
@@ -54,7 +52,7 @@ RUN cp /utils/niral_utilities/niral_utilitiesConfig.cmake.in /builds/niral_utili
 RUN cmake /Trafic -DUSE_SYSTEM_VTK:BOOL=TRUE  -DUSE_SYSTEM_ITK:BOOL=TRUE  -DUSE_SYSTEM_SlicerExecutionModel:BOOL=TRUE  -DUSE_SYSTEM_niral_utilities:BOOL=TRUE -DVTK_DIR:PATH=/builds/VTK_build -DITK_DIR:PATH=/builds/ITK_build -Dniral_utilities_DIR:PATH=/builds/niral_utilities_build -DSlicerExecutionModel_DIR:PATH=/builds/SEM_build && make -j12
 
 
-# copy all cli tools used by trafic in the cli-modules directory
+# copy all cli tools used by trafic in the cli-modules directory, then add it to $PATH
 RUN mkdir /cli-modules
 RUN cp /builds/trafic_build/Trafic-build/CLI/cxx/fiber*/bin/* /cli-modules
 RUN cp /builds/trafic_build/Trafic-build/CLI/cxx/createLandmarks/bin/* /cli-modules
