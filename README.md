@@ -165,6 +165,7 @@ Optional:
 ```
 --number_points (Number of points to use for the sampling. Default: 50)
 --number_landmarks (Number of landmarks to use. Default: 32)
+--use_smote (Use this flag if you want to use synthetic oversampling -- Adding noise to the features to artificially increase the dataset size, will also balance class sizes)
 --no_landmarks (Don't add the landmarks to the features)
 --no_curvature (Don't add curvature to the features)
 --no_torsion (Don't add torsion to the features)
