@@ -106,6 +106,13 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
+
+        cum_acc = 0
+        cum_loss = 0
+
+        print_delta = 500
+        save_delta = 100000
+
         # loop will continue until we run out of input training cases
         try:
             step = 0
@@ -115,10 +122,14 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
                 start_time = time.time()
                 _, loss_value, accuracy_value = sess.run([train_op, loss, accuracy])
                 duration = time.time() - start_time
+                cum_acc += accuracy_value
+                cum_loss += loss_value
+                if step % print_delta == 0 and step is not 0:
 
-                if step % 50 == 0:
                     print('Step %d: loss = %.12f, acc = %.10f (%.3f sec)' % (step, loss_value, accuracy_value, duration))
-
+                    print('Since last step (cumulated): loss = %.12f, acc = %.10f' % (cum_loss / print_delta, cum_acc / print_delta))
+                    cum_acc = 0
+                    cum_loss = 0
                     print("")
 
                     sys.stdout.flush()
@@ -129,7 +140,7 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
                     summary_writer.flush()
 
                 # less frequently output checkpoint files.  Used for evaluating the model
-                if step % 1000 == 0:
+                if step % save_delta == 0:
                     checkpoint_path = os.path.join(checkpoint_dir,
                                                    'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
