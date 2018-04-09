@@ -4,7 +4,7 @@ import subprocess
 import shutil
 import time
 import sys
-# from fiberfileIO import *
+
 from makeDataset import make_fiber_feature
 from runStore import run_store
 from runClassification import run_classification
@@ -30,44 +30,26 @@ parser.add_argument('--fiber_name', action='store', dest='fiber_name', help='Nam
                     default="")
 
 
-def run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summary_dir, num_landmarks, fiber_name="Fiber"):
-  print "---Preprocessing Dataset..."
+def run_pipeline_eval(data_file, output_dir, checkpoint_dir,  summary_dir, landmark_file='', num_landmarks=32, fiber_name="Fiber", is_preprocessed=False):
   sys.stdout.flush()
   currentPath = os.path.dirname(os.path.abspath(__file__))
-  make_dataset_py = os.path.join(currentPath, 'makeDataset.py')
-  store_py = os.path.join(currentPath, 'runStore.py')
-  classification_py = os.path.join(currentPath, 'runClassification.py')
-  env_dir = os.path.join(currentPath, "miniconda2")
-  pythonPath = os.path.join(env_dir,"bin","python")
 
   src_dir = os.path.dirname(data_file)
   src_name = os.path.basename(data_file)
   tmp_dir = os.path.join(currentPath, 'tmp_dir_eval')
   tmp_file = os.path.join(tmp_dir, src_name)
-  make_fiber_feature(data_file, tmp_file, landmark_file, num_landmarks=num_landmarks, classification=True)
-  # print subprocess.Popen(cmd_make_dataset, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
-  print "---Storing Dataset..."
-  sys.stdout.flush()
-  # cmd_store = [prefix, pythonPath, store_py, "--test_dir", tmp_dir, "--original_dir", src_dir,"--num_landmarks",str(num_landmarks)]
-  # out, err = subprocess.Popen(cmd_store, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-  # print("\nout : " + str(out) + "\nerr : " + str(err))
+  if not os.path.isdir(tmp_dir):
+      os.makedirs(tmp_dir)
 
-  run_store(test_dir=tmp_dir, original_dir=src_dir, num_landmarks=num_landmarks)
-
-  print "---Classifying Dataset..."
-  sys.stdout.flush()
-  multi = False
-  if num_landmarks==5:
-    multi=False
-  elif num_landmarks==32:
-    multi=True
-  run_classification(tmp_dir, output_dir, checkpoint_dir, summary_dir, fiber_name=fiber_name)
-  # cmd_class = [prefix, pythonPath, classification_py, "--data_dir",tmp_dir,"--output_dir",output_dir,"--checkpoint_dir",checkpoint_dir,"--summary_dir",summary_dir, "--fiber_name", fiber_name]
-  # if num_landmarks == 32:
-    # cmd_class.append("--multiclass")
-  # out, err = subprocess.Popen(cmd_class, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-  # print("\nout : " + str(out) + "\nerr : " + str(err))
+  if is_preprocessed:
+    print("---Classifying Dataset...")
+    run_classification(data_file, output_dir, checkpoint_dir, summary_dir, fiber_name=data_file)
+  else:
+    print ("---Creating features...")
+    make_fiber_feature(data_file, tmp_file, landmark_file, num_landmarks=num_landmarks)
+    print ("---Classifying Dataset...")
+    run_classification(tmp_file, output_dir, checkpoint_dir, summary_dir, fiber_name=fiber_name)
 
   shutil.rmtree(tmp_dir)
 
@@ -80,14 +62,13 @@ def main():
   summary_dir = args.summary_dir
   fiber_name = args.fiber_name
 
-  run_pipeline_eval(data_file, output_dir, landmark_file, checkpoint_dir, summary_dir, 32, fiber_name)
-
+  run_pipeline_eval(data_file, output_dir, checkpoint_dir, summary_dir, landmark_file, 32, fiber_name)
 
 if __name__ == '__main__':
   try:
     main()
-  except Exception, e:
+  except e:
     print ('ERROR, EXCEPTION CAUGHT')
-    print str(e)
+    print(str(e))
     import traceback
     traceback.print_exc()
