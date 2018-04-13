@@ -57,6 +57,10 @@ def run_extraction(class_data, input_fiber, output_dir):
         input_dict = json.loads(json_string)
     name_labels = input_dict['labels']
     predictions = input_dict['predictions']
+
+    #convert strings back to lists
+    for key in predictions.keys():
+        predictions[key] = json.loads('{ "name" : ' + predictions[key] + '}')['name']
     num_classes = len(name_labels)
 
     pred_dictionnary = reformat_prediction(predictions, num_classes)

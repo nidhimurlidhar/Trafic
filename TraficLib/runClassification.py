@@ -159,7 +159,11 @@ def run_classification(data_file, output_dir, checkpoint_dir, summary_dir, fiber
         with open(os.path.join(checkpoint_dir, 'dataset_description.json')) as json_desc_file:
             json_string = json_desc_file.read()
             description_dict = json.loads(json_string)
-            description_dict['predictions'] = prediction
+
+            prediction_strings={}
+            for key in prediction.keys():
+                prediction_strings[key] = json.dumps(prediction[key])
+            description_dict['predictions'] = prediction_strings
             
             with open(os.path.join(output_dir, 'classification_output.json'), 'w') as output_file:
                 print ('Writing output file')
