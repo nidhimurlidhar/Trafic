@@ -58,11 +58,11 @@ def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks,
     out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
     make_fiber_feature(input_fiber, output_fiber, new_lm_path, 
-        num_points=parameters['num_points'],
-        num_landmarks=parameters['num_landmarks'],
-        lmOn=parameters['use_landmarks'],
-        torsOn=parameters['use_torsion'],
-        curvOn=parameters['use_curvature'])
+        number_points=parameters['num_points'],
+        number_landmarks=parameters['num_landmarks'],
+        landmarksOn=parameters['use_landmarks'],
+        torsionOn=parameters['use_torsion'],
+        curvatureOn=parameters['use_curvature'])
 
 def main():
     args = parser.parse_args()
