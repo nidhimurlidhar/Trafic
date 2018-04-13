@@ -9,7 +9,7 @@ import csv
 TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "TraficLib")
 sys.path.append(TRAFIC_LIB_DIR)
 
-from PipelineEval import run_pipeline_eval
+from runClassification import run_classification
 from fiber_preprocessing import fiber_preprocessing
 
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ def parse_csv_input(filename):
 
 def runClassification(input_fiber,  output_dir, summary_dir, checkpoint_dir, deformation_field='', landmarks_file='', is_preprocessed=False):
     if is_preprocessed:
-        run_pipeline_eval(input_fiber, output_dir, checkpoint_dir, summary_dir, is_preprocessed=True)
+        run_classification(input_fiber, output_dir, checkpoint_dir, summary_dir, fiber_name=input_fiber)
     else:
 
         default_parameters = {
@@ -52,8 +52,8 @@ def runClassification(input_fiber,  output_dir, summary_dir, checkpoint_dir, def
         tmp_fiber_file = os.path.join(tmp_dir, os.path.basename(input_fiber))
 
         fiber_preprocessing(input_fiber=input_fiber, output_fiber=tmp_fiber_file, deformation_field=deformation_field, landmarks=landmarks_file, parameters=default_parameters)
-        print('tmp fiber file', tmp_fiber_file)
-        run_pipeline_eval(tmp_fiber_file, output_dir, checkpoint_dir, summary_dir, landmarks_file)
+        run_classification(tmp_fiber_file, output_dir, checkpoint_dir, summary_dir, fiber_name=input_fiber)
+
     return
 
 def main():
