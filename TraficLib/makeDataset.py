@@ -2,6 +2,7 @@ import argparse
 import subprocess
 from os import sys, path
 from fiberfileIO import *
+import shutil
 if not hasattr(sys, 'argv'):
     sys.argv  = ['']
 
@@ -40,9 +41,10 @@ def run_make_dataset(input_dir, output_dir, landmarks="", number_landmarks=5, nu
             while os.path.isfile(output_fiber): # if a fiber already exists with the same name, we simply append a _1 to the new fiber
                 name, ext = os.path.splitext(output_fiber)
                 output_fiber = name + "_1" + exists
-            make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=number_points, number_landmarks=number_landmarks, lmOn=landmarksOn,torsOn=torsionOn,curvOn=curvatureOn)
+            make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=number_points, number_landmarks=number_landmarks, landmarksOn=landmarksOn,torsionOn=torsionOn,curvatureOn=curvatureOn)
+    shutil.copyfile(landmarks, os.path.join(output_dir, 'landmarks.fcsv'))
 
-def make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=50, number_landmarks=5, lmOn=True, torsOn=True, curvOn=True):
+def make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=50, number_landmarks=5, landmarksOn=True, torsionOn=True, curvatureOn=True):
     currentPath = os.path.dirname(os.path.abspath(__file__))
     CLI_DIR = os.path.join(currentPath, '/',"cli-modules")
     # CLI_DIR = os.path.join(currentPath, "..","..","cli-modules")
@@ -62,11 +64,11 @@ def make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=50, n
 
     cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
                  check_path(output_fiber), "-N", str(number_landmarks), "--landmarksfile", landmarks]
-    if lmOn:
+    if landmarksOn:
         cmd_ffc.append("--landmarks")
-    if torsOn:
+    if torsionOn:
         cmd_ffc.append("--torsion")
-    if curvOn:
+    if curvatureOn:
         cmd_ffc.append("--curvature")
     print (cmd_ffc)
     out, err = subprocess.Popen(cmd_ffc, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
