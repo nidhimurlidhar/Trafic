@@ -24,10 +24,9 @@ def read_training(input_dir, num_landmarks, num_points, landmarks, curvature, to
     fiber_names = []
     for label, folder in enumerate(folders):
         fiber_names.append(os.path.basename(folder))
-        fiber_files = [
-            os.path.join(folder, d) for d in sorted(os.listdir(folder))]
+        fiber_files = [os.path.join(folder, d) for d in sorted(os.listdir(folder))]
         for fiber in fiber_files:
-            fiber_file = os.path.join(folder, fiber)
+            fiber_file = fiber
             try:
                 data_fiber, data_label = fiber_extract_feature(fiber_file, landmarks, curvature, torsion,
                                                       num_landmarks, num_points, label, train=True)
