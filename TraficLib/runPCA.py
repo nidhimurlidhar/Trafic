@@ -1,3 +1,7 @@
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib as mpl
+mpl.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import os
@@ -6,8 +10,6 @@ from storeDef import *
 import argparse
 import pickle
 from sklearn.decomposition import PCA
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
 import smote
 
 
@@ -65,14 +67,13 @@ def run_store(args):
   print('labels_res',np.shape(labels_res))
   #print('labels_res',labels_res)
 
-  PCA_plot(dataset,labels,dataset_res,labels_res)
+  PCA_plot(dataset,labels,dataset_res,labels_res,args.output_dir)
 
 
-
-def PCA_plot(dataset,labels,dataset_res,labels_res):
+def PCA_plot(dataset,labels,dataset_res,labels_res,output_dir):
 
 #plot original dat and data resampled after a PCA decomposition
-  
+
   pca = PCA(n_components=100)
   pca.fit(dataset)
   dataset_pca=pca.transform(dataset)
@@ -84,14 +85,14 @@ def PCA_plot(dataset,labels,dataset_res,labels_res):
   plt.figure(1)
   plt.subplot(121)
   plt.scatter(dataset_pca[:,0],dataset_pca[:,1],edgecolor='none',alpha=1,c=labels,cmap=plt.cm.get_cmap('nipy_spectral',len(np.unique(labels))))
-  plt.title('Original data with pca (' + str(len(dataset_pca)) + ' samples)')
+  plt.title('Original data (' + str(len(dataset_pca)) + ' samples)')
   
   #pca.fit(dataset_res)
   dataset_res_pca=pca.transform(dataset_res)
   
   plt.subplot(122)
   plt.scatter(dataset_res_pca[:,0],dataset_res_pca[:,1],edgecolor='none',alpha=1,c=labels_res,cmap=plt.cm.get_cmap('nipy_spectral',len(np.unique(labels_res))))
-  plt.title('Resampled data with pca (' + str(len(dataset_res_pca)) + ' samples)')
+  plt.title('Resampled data (' + str(len(dataset_res_pca)) + ' samples)')
   plt.colorbar()
 
   for i in range(1,3):
@@ -100,6 +101,8 @@ def PCA_plot(dataset,labels,dataset_res,labels_res):
     plt.ylabel('component 2')
   
   cumsum = np.cumsum(pca.explained_variance_ratio_)
+  
+  plt.savefig(output_dir + "/figure1.png", dpi=1200)
   plt.figure(2)
   plt.plot(cumsum)
   plt.xlabel('nb of components')
@@ -111,6 +114,8 @@ def PCA_plot(dataset,labels,dataset_res,labels_res):
 
   histo = np.bincount(labels)
   histo_range = np.array(range(histo.shape[0]))
+  
+  plt.savefig(output_dir + "/figure2.png")
   plt.figure(3)
   plt.bar(histo_range, histo)
   plt.xlabel('Groups')
@@ -119,7 +124,8 @@ def PCA_plot(dataset,labels,dataset_res,labels_res):
   for xy in zip(histo_range, histo):
       plt.annotate(xy[1], xy=xy, ha="center", color="#4286f4")
 
-  plt.show()
+  plt.savefig(output_dir + "/figure3.png")
+  # plt.show()
 
 
 
@@ -131,6 +137,12 @@ def main(_):
       type=str,
       default='',
       help='Training directory with classes (folders), and .vtk fiber bundles')    
+
+    parser.add_argument(
+      '--output_dir', 
+      type=str,
+      default='',
+      help='Directory to output pictures to')        
 
     parser.add_argument(
           '--pickle', 
