@@ -9,6 +9,7 @@ from fiberfileIO import *
 from datetime import datetime
 import shutil
 import json
+import zipfile
 
 YELLOW = "\033[0;33m"
 NC = "\033[0m"
@@ -55,19 +56,19 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
         json_desc_file.write(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
     # with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'w') as json_desc_file:
-
-
-    # construct the graph
-    with tf.Graph().as_default():
-
         ## Output json configuration to tensorboard
         string_tensor = tf.constant(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')).replace('\n', '  \n').replace('    ', '&nbsp;&nbsp;&nbsp;&nbsp;'))
         tf.summary.text('parameters', string_tensor)
 
+
+    # construct the graph
+    with tf.Graph().as_default():
+        # with tf.variable_scope('', reuse=tf.AUTO_REUSE):
+        ## training data
         # Define inputs
         fibers, labels = nn.inputs(input_dir, batch_size=batch_size, num_epochs=number_epochs, conv=False)
         labels = tf.reshape(labels, [-1])
-        
+
         # Define the network
         results = nn.inference(fibers, number_hidden, num_classes, is_training=True, num_layers=number_layers)
 
@@ -88,7 +89,7 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
                            tf.local_variables_initializer())
 
         # setup a saver for saving checkpoints
-        saver = tf.train.Saver()
+        saver = tf.train.Saver(save_relative_paths=True)
 
         # create the session
         sess = tf.Session()
@@ -144,6 +145,8 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
                     checkpoint_path = os.path.join(checkpoint_dir,
                                                    'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
+                    # _, testing_loss_value, testing_accuracy_value = sess.run([testing_op, testing_loss, testing_accuracy])
+                    # print(testing_loss_value, testing_accuracy_value)
                   
                 step += 1
 
@@ -161,6 +164,17 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
         # shut down the threads gracefully
         coord.join(threads)
         sess.close()
+
+        # Creating the archive
+        with zipfile.ZipFile(os.path.join(checkpoint_dir, 'model.zip'), 'w') as model_zipfile:
+            model_zipfile.write(checkpoint_dir, 'model')
+            for root, dirs, files in os.walk(checkpoint_dir):
+                for file in files:
+                    if file != 'model.zip':
+                        print('Zipping: ', file)
+                        model_zipfile.write(os.path.join(root, file), os.path.join('model', file))
+            model_zipfile.write(os.path.join(input_dir, 'landmarks.fcsv'))
+            model_zipfile.write(os.path.join(input_dir, 'dataset_description.json'), os.path.join('model', 'dataset_description.json'))
 
 
 def main(_):
