@@ -63,10 +63,12 @@ def main():
     if args.input_csv:
         input_list = parse_csv_input(args.input_csv)
         for row in input_list:
+            print (row)
+            print (len(row))
             if len(row) == 4:
-                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[2], checkpoint_dir=row[3], is_preprocessed=True)
+                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[3], checkpoint_dir=row[2], is_preprocessed=True)
             elif len(row) == 6:
-                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[2], checkpoint_dir=row[3], deformation_field=row[4], landmarks_file=row[5], is_preprocessed=False)
+                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[3], checkpoint_dir=row[2], deformation_field=row[4], landmarks_file=row[5], is_preprocessed=False)
             else:
                 print('Invalid number of parameters in csv line, skipping...')
         return
