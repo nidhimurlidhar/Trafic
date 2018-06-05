@@ -8,6 +8,6 @@ def generate_with_SMOTE(dataset,labels):
   print('shape dataset',dataset.shape)
   print('shape labels',labels.shape)
   dataset_res, labels_res = sm.fit_sample(dataset,labels)
-  print('shape dataset resampled',np.shape(dataset_res),'shape lables resampled',np.shape(labels_res))
+  print('shape dataset resampled',np.shape(dataset_res),'shape labels resampled',np.shape(labels_res))
 
   return dataset_res,labels_res
