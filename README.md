@@ -184,8 +184,28 @@ Optional:
 --learning_rate  (Initial learning rate)
 --number_epochs (Number of epochs)
 --batch_size (Batch size)
---number_hidden (Size of hidden layers. Not currently in use)
---number_layers (Number of layers. Not currently in use)
+--model_description (Path to custom JSON model description)
+```
+* (Optional) If you want to use a custom network shape, you have the option to define this shape in a separated JSON file, then input this file using --model_description
+This json file should contain an ordered list of layers, as well as the desired dropout rate, using the same format as the following example:
+```
+{
+    "dropout_rate": 0.95,
+    "layers": [
+        {
+            "name": "layer1",
+            "units": 8192
+        },
+        {
+            "name": "layer2",
+            "units": 4096
+        },
+        {
+            "name": "layer3",
+            "units": 1024
+        }
+    ]
+}
 ```
 * Expected output: your output directory should contain a checkpoint file and different tensorflow files.
 You can delete all the temporary folders that were used in the preprocessing stages

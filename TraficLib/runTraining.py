@@ -17,8 +17,6 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_float('learning_rate', 0.000001, 'Initial learning rate.')
 flags.DEFINE_integer('number_epochs', 3, 'Number of epochs to run trainer.')
-flags.DEFINE_integer('number_hidden', 1024, 'Size of hidden layers. Not currently in use')
-flags.DEFINE_integer('number_layers', 3, 'Number of layers. Not currently in use')
 flags.DEFINE_integer('batch_size', 5, 'Batch size.')
 flags.DEFINE_string('input_dir', '',
                     'Directory with the training data.')
@@ -26,8 +24,9 @@ flags.DEFINE_string('checkpoint_dir', '',
                     """Directory where to write model checkpoints.""")
 flags.DEFINE_string('summary', '',
                     """Directory where to write summary.""")
+flags.DEFINE_string('model_description', '', 'Path to custom JSON model description, refer to documentation for format information')
 
-def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_rate=0.000001, batch_size=5, number_hidden=1024, number_layers=3):
+def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_rate=0.000001, batch_size=5, model_description = ''):
     
     num_classes = 0
 
@@ -50,8 +49,25 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
         curvOn = store_params['curvOn']
         torsOn = store_params['torsOn']
         num_features = num_landmarks * int(lmOn) + int(curvOn) + int(torsOn)
+
+    model = None
+    if model_description is '':
+        print('Model shape not specified, using default.')
+        model = {'layers':[
+                {'name':'layer1', 'units':8192},
+                {'name':'layer2', 'units':4096},
+                {'name':'layer3', 'units':1024},
+                {'name':'layer4', 'units':1024},
+                {'name':'layer5', 'units':512}],
+                'dropout_rate':0.95}
+    else:
+        with open(model_description, 'r') as json_model_file:
+            model_string = json_model_file.read()
+            model = json.loads(model_string)
+
     with open(os.path.join(checkpoint_dir, 'dataset_description.json'), 'w') as json_desc_file:
-        training_parameters = {'nb_layers' : number_layers, 'batch_size' : batch_size, 'num_epochs' : number_epochs, 'num_hidden' : number_hidden, 'input_dataset' : input_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary}
+        training_parameters = {'batch_size' : batch_size, 'num_epochs' : number_epochs, 'input_dataset' : input_dir, 'checkpoint_directory' : checkpoint_dir, 'log_directory' : summary}
+        training_parameters['model'] = model
         description_dict['training_parameters'] = training_parameters
         json_desc_file.write(json.dumps(description_dict, sort_keys=True, indent=4, separators=(',', ': ')))
 
@@ -69,8 +85,9 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
         fibers, labels = nn.inputs(input_dir, batch_size=batch_size, num_epochs=number_epochs, conv=False)
         labels = tf.reshape(labels, [-1])
 
+
         # Define the network
-        results = nn.inference(fibers, number_hidden, num_classes, is_training=True, num_layers=number_layers)
+        results = nn.inference(train_data=fibers, num_labels=num_classes, is_training=True, model=model)
 
         # Define metrics
         loss = nn.loss(results, labels)
@@ -125,7 +142,7 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
                 duration = time.time() - start_time
                 cum_acc += accuracy_value
                 cum_loss += loss_value
-                if step % print_delta == 0 and step is not 0:
+                if step % print_delta == 0:# and step is not 0:
 
                     print('Step %d: loss = %.12f, acc = %.10f (%.3f sec)' % (step, loss_value, accuracy_value, duration))
                     print('Since last step (cumulated): loss = %.12f, acc = %.10f' % (cum_loss / print_delta, cum_acc / print_delta))
@@ -149,7 +166,7 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
                     # print(testing_loss_value, testing_accuracy_value)
                   
                 step += 1
-
+                break
                 # quit after we run out of input files to read
         except tf.errors.OutOfRangeError:
             print('Done training for %d epochs, %d steps.' % (number_epochs,
@@ -173,13 +190,13 @@ def run_training(input_dir, checkpoint_dir, summary, number_epochs=3, learning_r
                     if file != 'model.zip':
                         print('Zipping: ', file)
                         model_zipfile.write(os.path.join(root, file), os.path.join('model', file))
-            model_zipfile.write(os.path.join(input_dir, 'landmarks.fcsv'))
-            model_zipfile.write(os.path.join(input_dir, 'dataset_description.json'), os.path.join('model', 'dataset_description.json'))
+            model_zipfile.write(os.path.join(input_dir, 'landmarks.fcsv'), 'landmarks.fcsv')
+            model_zipfile.write(os.path.join(checkpoint_dir, 'dataset_description.json'), 'dataset_description.json')
 
 
 def main(_):
     start = time.time()
-    run_training(FLAGS.input_dir, FLAGS.checkpoint_dir, FLAGS.summary, FLAGS.number_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.number_hidden, FLAGS.number_layers)
+    run_training(FLAGS.input_dir, FLAGS.checkpoint_dir, FLAGS.summary, FLAGS.number_epochs, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.model_description)
     end = time.time()
     print("Training Process took %dh%02dm%02ds" % (convert_time(end - start)))
 
