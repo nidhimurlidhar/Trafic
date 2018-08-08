@@ -9,7 +9,7 @@ import csv
 TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "TraficLib")
 sys.path.append(TRAFIC_LIB_DIR)
 
-from PipelineEval import run_pipeline_eval
+from runClassification import run_classification
 from fiber_preprocessing import fiber_preprocessing
 
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ def parse_csv_input(filename):
 
 def runClassification(input_fiber,  output_dir, summary_dir, checkpoint_dir, deformation_field='', landmarks_file='', is_preprocessed=False):
     if is_preprocessed:
-        run_pipeline_eval(input_fiber, output_dir, checkpoint_dir, summary_dir, is_preprocessed=True)
+        run_classification(input_fiber, output_dir, checkpoint_dir, summary_dir, fiber_name=input_fiber)
     else:
 
         default_parameters = {
@@ -52,8 +52,8 @@ def runClassification(input_fiber,  output_dir, summary_dir, checkpoint_dir, def
         tmp_fiber_file = os.path.join(tmp_dir, os.path.basename(input_fiber))
 
         fiber_preprocessing(input_fiber=input_fiber, output_fiber=tmp_fiber_file, deformation_field=deformation_field, landmarks=landmarks_file, parameters=default_parameters)
-        print('tmp fiber file', tmp_fiber_file)
-        run_pipeline_eval(tmp_fiber_file, output_dir, checkpoint_dir, summary_dir, landmarks_file)
+        run_classification(tmp_fiber_file, output_dir, checkpoint_dir, summary_dir, fiber_name=input_fiber)
+
     return
 
 def main():
@@ -63,10 +63,12 @@ def main():
     if args.input_csv:
         input_list = parse_csv_input(args.input_csv)
         for row in input_list:
+            print (row)
+            print (len(row))
             if len(row) == 4:
-                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[2], checkpoint_dir=row[3], is_preprocessed=True)
+                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[3], checkpoint_dir=row[2], is_preprocessed=True)
             elif len(row) == 6:
-                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[2], checkpoint_dir=row[3], deformation_field=row[4], landmarks_file=row[5], is_preprocessed=False)
+                runClassification(input_fiber=row[0], output_dir=row[1], summary_dir=row[3], checkpoint_dir=row[2], deformation_field=row[4], landmarks_file=row[5], is_preprocessed=False)
             else:
                 print('Invalid number of parameters in csv line, skipping...')
         return

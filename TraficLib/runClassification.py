@@ -75,8 +75,10 @@ def run_classification(data_file, output_dir, checkpoint_dir, summary_dir, fiber
             torsOn = store_params['torsOn']
             num_features = num_landmarks * int(lmOn) + int(curvOn) + int(torsOn)
 
-            num_layers = train_params['nb_layers']
-            num_hidden = train_params['num_hidden']
+            model = None
+            if 'model' in train_params:
+                model = train_params['model']
+
         # Build a Graph that computes the logits predictions from the
         # inference model.  We'll use a prior graph built by the training
 
@@ -89,7 +91,7 @@ def run_classification(data_file, output_dir, checkpoint_dir, summary_dir, fiber
             labels = tf.convert_to_tensor(labels, dtype=tf.string)           
 
             # with tf.variable_scope("model") as scope:
-            logits = nn.inference(fibers, num_hidden=num_hidden, num_labels=num_classes, is_training=False, num_layers=num_layers)
+            logits = nn.inference(fibers, num_labels=num_classes, is_training=False, model=model)
 
 
         # Conv Version
@@ -159,7 +161,11 @@ def run_classification(data_file, output_dir, checkpoint_dir, summary_dir, fiber
         with open(os.path.join(checkpoint_dir, 'dataset_description.json')) as json_desc_file:
             json_string = json_desc_file.read()
             description_dict = json.loads(json_string)
-            description_dict['predictions'] = prediction
+
+            prediction_strings={}
+            for key in prediction.keys():
+                prediction_strings[key] = json.dumps(prediction[key])
+            description_dict['predictions'] = prediction_strings
             
             with open(os.path.join(output_dir, 'classification_output.json'), 'w') as output_file:
                 print ('Writing output file')

@@ -26,29 +26,25 @@ def variable_summaries(var, name):
         tf.scalar_summary('min_' + name, tf.reduce_min(var))
         tf.histogram_summary('histogram_' + name, var)
 
-def inference(train_data, num_hidden, num_labels, is_training, num_layers, reuse=False):
-    # input:    train_data      - train tensor [batch_size, num_data]
-    # input:    num_hidden      - number of hidden layers
-    # input:    num_data        - num_feature*num_points
-    # input:    num_labels      - number of labels
-    # input:    valid_data      - valid tensor
-    # output:   logits          - tensor of computed train_logits
-    # output:   valid           - tensor of computed valid_logits
-    # output:   saver           - saver of the model
-
+def inference(train_data, num_labels, is_training, reuse=False, model=None):
+    dropout_rate=0.95
     train_data = tf.layers.batch_normalization(train_data, training=is_training)
-    if num_layers < 1:
-        print('Error: number of layers should be at least 1')
-        num_layers = 1
-    
-    layer = tf.layers.dense(inputs=train_data, name='layer0', units=8192, activation=tf.nn.relu, reuse=reuse)
-    layer2 = tf.layers.dense(inputs=layer, name='layer1', units=4096   , activation=tf.nn.relu, reuse=reuse)
-    layer3 = tf.layers.dense(inputs=layer2, name='layer2', units=2048, activation=tf.nn.relu, reuse=reuse)
-    layer4 = tf.layers.dense(inputs=layer3, name='layer3', units=1024, activation=tf.nn.relu, reuse=reuse)
-    layer5 = tf.layers.dense(inputs=layer4, name='layer4', units=1024, activation=tf.nn.relu, reuse=reuse)
-    layer6 = tf.layers.dense(inputs=layer5, name='layer5', units=512, activation=tf.nn.relu, reuse=reuse)
+    last_layer = train_data
+    if model is None:
+        print('Model shape not specified, using default.')
+        layer = tf.layers.dense(inputs=train_data, units=8192, activation=tf.nn.relu)
+        layer2 = tf.layers.dense(inputs=layer, name='layer1', units=4096   , activation=tf.nn.relu)
+        layer3 = tf.layers.dense(inputs=layer2, name='layer2', units=2048, activation=tf.nn.relu)
+        layer4 = tf.layers.dense(inputs=layer3, name='layer3', units=1024, activation=tf.nn.relu)
+        layer5 = tf.layers.dense(inputs=layer4, name='layer4', units=1024, activation=tf.nn.relu)
+        last_layer = tf.layers.dense(inputs=layer5, name='layer5', units=512, activation=tf.nn.relu)
+    else:
+        dropout_rate = model['dropout_rate']
+        for layer_dict in model['layers']:
+            layer = tf.layers.dense(inputs=last_layer, name=layer_dict['name'], units=layer_dict['units'], activation=tf.nn.relu)
+            last_layer = layer
 
-    dropout = tf.layers.dropout(inputs=layer6, name='dropout', rate=0.5, training=is_training)
+    dropout = tf.layers.dropout(inputs=last_layer, name='dropout', rate=dropout_rate, training=is_training)
     final = tf.layers.dense(inputs=dropout, name='final', units=num_labels, activation=None)
 
     return final
@@ -98,13 +94,13 @@ def read_and_decode(filename_queue, label_type_int64):
 
     return fiber, label
 
-def inputs(dir,  batch_size, num_epochs, conv=False):
+def inputs(dir,  batch_size, num_epochs, conv=False, record_name='train.tfrecords'):
 
     if not num_epochs:
         num_epochs = None
 
     label_int = True
-    filename = os.path.join(dir, TRAIN_FILE)
+    filename = os.path.join(dir, record_name)
 
     record_iterator = tf.python_io.tf_record_iterator(path=filename)
 

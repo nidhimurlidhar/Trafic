@@ -5,6 +5,7 @@ import subprocess
 import csv
 import sys
 import argparse
+import shutil
 
 from makeDataset import make_fiber_feature
 from runStore import run_store
@@ -18,7 +19,7 @@ parser.add_argument('--input_csv', action='store', dest='input_csv', help='Input
 parser.add_argument('--input', action='store', dest='input', help='Input fiber to preprocess', default='')
 parser.add_argument('--output', action='store', dest='output', help='Output preprocessed fiber file', default='')
 parser.add_argument('--displacement', action='store', dest='displacement', help= 'Displacement field to reference atlas', default='')
-parser.add_argument('--landmarks', action='store', dest='landmarks', help='landmarks file (.fcsv) for reference atlas', default='')
+parser.add_argument('--landmarks', action='store', dest='landmarks', help='landmarks file (.fcsv)', default='')
 
 parser.add_argument('--number_points', type=int, action='store', dest='number_points', help='Number of points to sample', default=50)
 parser.add_argument('--number_landmarks', type=int, action='store', dest='number_landmarks', help='Number of landmarks to use', default=32)
@@ -40,29 +41,33 @@ def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks,
     env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
     cli_dir = os.path.join(currentPath, "/", "cli-modules")
 
-    polydatatransform = os.path.join(cli_dir, "polydatatransform")
-    # lm_ped = os.path.join(currentPath,"Resources", "Landmarks", "landmarks_32pts_afprop.fcsv")
     if landmarks == '':
-        print('No landmark file specified, using default...')
-        landmarks = os.path.join('/root/trafic_data/datasetsJeffrey/clustered_landmarks.fcsv')
+        print('No landmark file specified, exiting...')
+        return
 
     tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
       os.makedirs(tmp_dir)
     new_lm_path = os.path.join(tmp_dir, "lm_class.fcsv")
-
+    
     if not os.path.isdir(os.path.dirname(output_fiber)) and not os.path.dirname(output_fiber):
       os.makedirs(os.path.dirname(output_fiber))
 
-    cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", landmarks, "-D", deformation_field, "-o", new_lm_path]
-    out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    if deformation_field == '':
+        print('No def field specified.. Using landmarks as is')
+        shutil.copyfile(landmarks, new_lm_path)
+    else:
+        polydatatransform = os.path.join(cli_dir, "polydatatransform")
+        
+        cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", landmarks, "-D", deformation_field, "-o", new_lm_path]
+        out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
     make_fiber_feature(input_fiber, output_fiber, new_lm_path, 
-        num_points=parameters['num_points'],
-        num_landmarks=parameters['num_landmarks'],
-        lmOn=parameters['use_landmarks'],
-        torsOn=parameters['use_torsion'],
-        curvOn=parameters['use_curvature'])
+        number_points=parameters['num_points'],
+        number_landmarks=parameters['num_landmarks'],
+        landmarksOn=parameters['use_landmarks'],
+        torsionOn=parameters['use_torsion'],
+        curvatureOn=parameters['use_curvature'])
 
 def main():
     args = parser.parse_args()
