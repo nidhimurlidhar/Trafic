@@ -356,7 +356,9 @@ void FiberFeaturesCreator::compute_landmark_feature_from_dMap()
 		do
 		{
 			start ++;
-			start_char = static_cast<std::ostringstream*>( &( std::ostringstream() << start) )->str();
+			std::stringstream ss;
+			ss << start;
+			start_char = ss.str();
 			landmarkLabel = "Distance2Landmark"+start_char;
 			test_array = this->inputFibers->GetPointData()->GetScalars(landmarkLabel.c_str());
 		}
@@ -491,7 +493,9 @@ void FiberFeaturesCreator::compute_landmark_feature()
 	do
 	{
 		start ++;
-		std::string start_char = static_cast<std::ostringstream*>( &( std::ostringstream() << start) )->str();
+		std::stringstream ss;
+		ss << start;
+		std::string start_char = ss.str();
 		std::string lm_name = "Distance2Landmark"+start_char;
 		test_array = this->inputFibers->GetPointData()->GetScalars(lm_name.c_str());
 	}
@@ -499,8 +503,9 @@ void FiberFeaturesCreator::compute_landmark_feature()
 
 	for(int k=start; k<this->nbLandmarks+start+1; k++)
 	{
-
-		std::string k_char = static_cast<std::ostringstream*>( &( std::ostringstream() << k) )->str();
+		std::stringstream ss;
+		ss << k;
+		std::string k_char = ss.str();
 		landmarkLabel.push_back("Distance2Landmark"+k_char);
 		
 	}
