@@ -21,10 +21,9 @@ if(${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
 	include(${Slicer_USE_FILE})
 endif()
 
-message(STATUS ${niral_utilities_DIR})
-find_package(niral_utilities REQUIRED)
-message(STATUS ${niral_utilities_DIR})
-message(STATUS ${niral_utilities_INCLUDE_DIRS})
+find_package(niral_utilities REQUIRED
+	HINTS ${niral_utilities_DIR})
+
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(TraficMulti)
