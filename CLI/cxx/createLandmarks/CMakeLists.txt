@@ -36,6 +36,19 @@ SEMMacroBuildCLI(
     INSTALL_RUNTIME_DESTINATION ${INSTALL_RUNTIME_DESTINATION}
     )
 
-
-
 target_compile_options(createLandmarks PRIVATE "-Wall")
+
+file(GLOB LIBRARY_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.txx ${CMAKE_CURRENT_SOURCE_DIR}/*.hxx ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+
+set_target_properties(createLandmarks PROPERTIES
+  PUBLIC_HEADER "${LIBRARY_HEADERS}"
+  )
+
+install( TARGETS createLandmarks 
+  EXPORT TraficTargets
+  RUNTIME DESTINATION ${INSTALL_RUNTIME_DESTINATION} 
+  PUBLIC_HEADER DESTINATION include
+  )
+# Add all targets to the build-tree export set
+
+set_property(GLOBAL APPEND PROPERTY Trafic_LIBRARIES createLandmarks)
