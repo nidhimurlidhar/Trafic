@@ -19,6 +19,10 @@ if(${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
 	# Extension dependencies
 	find_package(Slicer REQUIRED)
 	include(${Slicer_USE_FILE})
+
+  SET(INSTALL_RUNTIME_DESTINATION ${Slicer_INSTALL_CLIMODULES_BIN_DIR})
+  SET(INSTALL_LIBRARY_DESTINATION ${Slicer_INSTALL_CLIMODULES_LIB_DIR})
+  SET(INSTALL_ARCHIVE_DESTINATION ${Slicer_INSTALL_CLIMODULES_LIB_DIR})
 endif()
 
 SETIFEMPTY(INSTALL_RUNTIME_DESTINATION bin)
@@ -30,8 +34,10 @@ SETIFEMPTY(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 find_package(niral_utilities REQUIRED
 	HINTS ${niral_utilities_DIR})
+include_directories(${niral_utilities_INCLUDE_DIRS})
 
-foreach(niral_utilities_lib ${niral_utilities_LIBRARIES})
+if(NOT ${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
+  foreach(niral_utilities_lib ${niral_utilities_LIBRARIES})
 
     get_target_property(niral_utilities_location ${niral_utilities_lib} LOCATION_RELEASE)
     if(NOT EXISTS ${niral_utilities_location})
@@ -42,8 +48,9 @@ foreach(niral_utilities_lib ${niral_utilities_LIBRARIES})
     install(PROGRAMS ${niral_utilities_location} 
     	DESTINATION ${INSTALL_RUNTIME_DESTINATION}
     	COMPONENT RUNTIME)
-    
+      
   endforeach()
+endif()
 
 #-----------------------------------------------------------------------------
 # Extension modules
