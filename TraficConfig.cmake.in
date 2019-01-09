@@ -10,11 +10,14 @@ set(Trafic_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
 include_directories(${Trafic_INCLUDE_DIRS})
  
 # Our library dependencies (contains definitions for IMPORTED targets)
-if(NOT TARGET polydatatransform AND NOT Trafic_BINARY_DIR)
-  if(EXISTS "${Trafic_CMAKE_DIR}/TraficTargets.cmake")
-   include("${Trafic_CMAKE_DIR}/TraficTargets.cmake")
-  endif()
+if(EXISTS "${Trafic_CMAKE_DIR}/TraficTargets.cmake")
+include("${Trafic_CMAKE_DIR}/TraficTargets.cmake")
 endif()
+
+set(Trafic_PY_DIR 
+	@CONF_PY_DIR@/TraficLib
+	@CONF_PY_DIR@/TraficMulti
+}
  
 # These are IMPORTED targets created by TraficTargets.cmake
 set(Trafic_LIBRARIES "@CONF_LIBRARIES@")

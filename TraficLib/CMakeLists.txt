@@ -3,15 +3,18 @@ set(MODULE_NAME TraficLib)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
-  envInstallTF.py
+  PipelineTrain.py
+  envTensorFlow.py
+  extractClassifiedFibers.py
+  fiber_preprocessing.py
   fiberfileIO.py
   makeDataset.py
   networkDef.py
-  PipelineEval.py
-  PipelineTrain.py
   runClassification.py
+  runPCA.py
   runStore.py
   runTraining.py
+  smote.py
   storeDef.py
   )
 set(MODULE_PYTHON_RESOURCES
@@ -29,5 +32,9 @@ if(${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
     RESOURCES ${MODULE_PYTHON_RESOURCES}
     WITH_GENERIC_TESTS
     )
+else()
+  install( FILES ${MODULE_PYTHON_SCRIPTS}
+    DESTINATION ${INSTALL_LIBRARY_DESTINATION}/TraficLib
+  )
 endif()
 

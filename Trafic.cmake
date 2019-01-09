@@ -36,22 +36,6 @@ find_package(niral_utilities REQUIRED
 	HINTS ${niral_utilities_DIR})
 include_directories(${niral_utilities_INCLUDE_DIRS})
 
-if(NOT ${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
-  foreach(niral_utilities_lib ${niral_utilities_LIBRARIES})
-
-    get_target_property(niral_utilities_location ${niral_utilities_lib} LOCATION_RELEASE)
-    if(NOT EXISTS ${niral_utilities_location})
-      message(STATUS "skipping niral_utilities_lib install rule: [${niral_utilities_location}] does not exist")
-      continue()
-    endif()
-
-    install(PROGRAMS ${niral_utilities_location} 
-    	DESTINATION ${INSTALL_RUNTIME_DESTINATION}
-    	COMPONENT RUNTIME)
-      
-  endforeach()
-endif()
-
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(TraficMulti)
@@ -76,6 +60,7 @@ endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
   "Installation directory for CMake files")
 set(INSTALL_INCLUDE_DIR include)
+set(INSTALL_BIN_DIR bin)
 
 # Make relative paths absolute (needed later on)
 foreach(p LIB BIN INCLUDE CMAKE)
@@ -86,14 +71,17 @@ foreach(p LIB BIN INCLUDE CMAKE)
 endforeach()
 
 file(RELATIVE_PATH REL_INCLUDE_DIR ${INSTALL_CMAKE_DIR} ${INSTALL_INCLUDE_DIR})
+file(RELATIVE_PATH REL_BIN_DIR ${INSTALL_CMAKE_DIR} ${INSTALL_BIN_DIR})
 # ... for the build tree
 set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
 get_property(CONF_LIBRARIES GLOBAL PROPERTY Trafic_LIBRARIES)
 
+set(Trafic_PY_DIR ${Trafic_SOURCE_DIR})
 configure_file(TraficConfig.cmake.in
   "${PROJECT_BINARY_DIR}/TraficConfig.cmake" @ONLY)
 # ... for the install tree
 set(CONF_INCLUDE_DIRS "\${Trafic_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+set(CONF_PY_DIR "\${Trafic_CMAKE_DIR}/${REL_BIN_DIR}")
 configure_file(TraficConfig.cmake.in
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/TraficConfig.cmake" @ONLY)
 

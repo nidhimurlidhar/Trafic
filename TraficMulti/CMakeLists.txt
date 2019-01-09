@@ -21,6 +21,10 @@ if(${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
     RESOURCES ${MODULE_PYTHON_RESOURCES}
     WITH_GENERIC_TESTS
     )
+else()
+  install(FILES TraficMulti_cli.py
+    DESTINATION ${INSTALL_LIBRARY_DESTINATION}/TraficMulti)
+    
 endif()
 
 #-----------------------------------------------------------------------------
