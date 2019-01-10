@@ -17,7 +17,7 @@ endif()
 set(Trafic_PY_DIR 
 	@CONF_PY_DIR@/TraficLib
 	@CONF_PY_DIR@/TraficMulti
-}
+)
  
 # These are IMPORTED targets created by TraficTargets.cmake
 set(Trafic_LIBRARIES "@CONF_LIBRARIES@")
