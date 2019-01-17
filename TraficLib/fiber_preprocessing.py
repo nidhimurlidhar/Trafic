@@ -14,6 +14,23 @@ TRAFIC_LIB_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "
 sys.path.append(TRAFIC_LIB_DIR)
 print (path.join(TRAFIC_LIB_DIR))
 
+real_py_file = os.path.dirname(os.path.realpath(__file__))
+default_paths = []
+
+default_paths.append(real_py_file)
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../")))
+
+#From the source dir to the build dir
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../Trafic-build/Trafic-build/bin")))
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../niral_utilities-install/bin")))
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../Trafic-build/niral_utilities-install/bin")))
+
+#For the install dir
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../../../niral_utilities-install/bin")))
+
+#For docker
+default_paths.append("/cli-modules")
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_csv', action='store', dest='input_csv', help='Input csv with each line being "input_fiber, output_fiber, deformation_field, landmarks file"', default='')
 parser.add_argument('--input', action='store', dest='input', help='Input fiber to preprocess', default='')
@@ -27,6 +44,11 @@ parser.add_argument('--number_landmarks', type=int, action='store', dest='number
 parser.add_argument('--no_landmarks', action='store_true', dest='no_landmarks', help='Should landmarks be used (true if flag not specified). Note that the training needs to be done with the same parameters')
 parser.add_argument('--no_curvature', action='store_true', dest='no_curvature', help='Should curvature be used (true if flag not specified). Note that the training needs to be done with the same parameters')
 parser.add_argument('--no_torsion', action='store_true', dest='no_torsion', help='Should torsion be used (true if flag not specified). Note that the training needs to be done with the same parameters')
+parser.add_argument('--hints', type=str, nargs='+', help='Path hints to find the executables: fiberfeaturescreator, ', default=default_paths)
+
+args = parser.parse_args()
+
+POLYDATATRANSFORM = get_executable("polydatatransform", args.hints)
 
 def parse_csv_input(filename):
     with open(filename, 'r') as csvfile:
@@ -36,10 +58,7 @@ def parse_csv_input(filename):
             array.append(row)
         return array
 
-def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks, parameters ):
-    currentPath = os.path.dirname(os.path.abspath(__file__))
-    env_dir = os.path.join(currentPath, "..", "miniconda2") #could be fixed paths within docker
-    cli_dir = os.path.join(currentPath, "/", "cli-modules")
+def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks, parameters):
 
     if landmarks == '':
         print('No landmark file specified, exiting...')
@@ -57,9 +76,8 @@ def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks,
         print('No def field specified.. Using landmarks as is')
         shutil.copyfile(landmarks, new_lm_path)
     else:
-        polydatatransform = os.path.join(cli_dir, "polydatatransform")
         
-        cmd_polydatatransform = [polydatatransform, "--invertx", "--inverty", "--fiber_file", landmarks, "-D", deformation_field, "-o", new_lm_path]
+        cmd_polydatatransform = [POLYDATATRANSFORM, "--invertx", "--inverty", "--fiber_file", landmarks, "-D", deformation_field, "-o", new_lm_path]
         out, err = subprocess.Popen(cmd_polydatatransform, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
     make_fiber_feature(input_fiber, output_fiber, new_lm_path, 
@@ -69,8 +87,15 @@ def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks,
         torsionOn=parameters['use_torsion'],
         curvatureOn=parameters['use_curvature'])
 
+def get_executable(name, hints=["."]):
+    for h in hints:
+        for root, dirs, files in os.walk(h):
+            current_file = os.path.join(root, name)
+            if name in files and os.path.isfile(current_file):
+                return current_file
+    return name #Hopefully is in the system path
+
 def main():
-    args = parser.parse_args()
     parameters = {
         'num_points'   : args.number_points,
         'num_landmarks': args.number_landmarks,

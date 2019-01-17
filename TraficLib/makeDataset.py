@@ -6,7 +6,25 @@ import shutil
 if not hasattr(sys, 'argv'):
     sys.argv  = ['']
 
-    
+
+real_py_file = os.path.dirname(os.path.realpath(__file__))
+default_paths = []
+
+default_paths.append(real_py_file)
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../")))
+
+#From the source dir to the build dir
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../Trafic-build/Trafic-build/bin")))
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../niral_utilities-install/bin")))
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../Trafic-build/niral_utilities-install/bin")))
+
+#For the install dir
+default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../../../niral_utilities-install/bin")))
+
+#For docker
+default_paths.append("/cli-modules")
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_dir', action='store', dest='input_dir', help='Input directory ',
                     default="")
@@ -22,8 +40,12 @@ parser.add_argument('--number_landmarks', action='store', dest='number_landmarks
 parser.add_argument('--no_landmarks', action='store_true', dest='no_landmarks', help='Don\'t compute landmarks features')
 parser.add_argument('--no_curvature', action='store_true', dest='no_curvature', help='Don\'t compute curvature features')
 parser.add_argument('--no_torsion', action='store_true', dest='no_torsion', help='Don\'t compute torsion features')
+parser.add_argument('--hints', type=str, nargs='+', help='Path hints to find the executables: fiberfeaturescreator, ', default=default_paths)
 
+args = parser.parse_args()
 
+FIBERSAMPLING = get_executable("fibersampling", args.hints)
+FIBERFEATURESCREATOR = get_executable("fiberfeaturescreator", args.hints)
 
 
 def run_make_dataset(input_dir, output_dir, landmarks="", number_landmarks=5, number_points=50, landmarksOn=True, curvatureOn=True, torsionOn=True):
@@ -45,24 +67,17 @@ def run_make_dataset(input_dir, output_dir, landmarks="", number_landmarks=5, nu
     shutil.copyfile(landmarks, os.path.join(output_dir, 'landmarks.fcsv'))
 
 def make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=50, number_landmarks=5, landmarksOn=True, torsionOn=True, curvatureOn=True):
-    currentPath = os.path.dirname(os.path.abspath(__file__))
-    CLI_DIR = os.path.join(currentPath, '/',"cli-modules")
-    # CLI_DIR = os.path.join(currentPath, "..","..","cli-modules")
 
-    env_dir = os.path.join(currentPath, "..", "miniconda2")
-    fibersampling = os.path.join(CLI_DIR, "fibersampling")
-    fiberfeaturescreator = os.path.join(CLI_DIR, "fiberfeaturescreator")
-
-    cmd_sampling = [fibersampling,"--input", check_file(input_fiber), "--output",
+    cmd_sampling = [FIBERSAMPLING,"--input", check_file(input_fiber), "--output",
              check_path(output_fiber, True), "-N", str(number_points)]
 
-    print (cmd_sampling)
+    print (" ".join(cmd_sampling))
     out, err = subprocess.Popen(cmd_sampling, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     print("\nout : " + str(out))
     if err != "":
         print("\nerr : " + str(err))
 
-    cmd_ffc = [fiberfeaturescreator, "--input", check_file(output_fiber), "--output",
+    cmd_ffc = [FIBERFEATURESCREATOR, "--input", check_file(output_fiber), "--output",
                  check_path(output_fiber), "-N", str(number_landmarks), "--landmarksfile", landmarks]
     if landmarksOn:
         cmd_ffc.append("--landmarks")
@@ -70,7 +85,7 @@ def make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=50, n
         cmd_ffc.append("--torsion")
     if curvatureOn:
         cmd_ffc.append("--curvature")
-    print (cmd_ffc)
+    print (" ".join(cmd_ffc))
     out, err = subprocess.Popen(cmd_ffc, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     print("\nout : " + str(out))
     
@@ -78,9 +93,16 @@ def make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=50, n
         print("\nerr : " + str(err))
     return
 
+def get_executable(name, hints=["."]):
+    for h in hints:
+        for root, dirs, files in os.walk(h):
+            current_file = os.path.join(root, name)
+            if name in files and os.path.isfile(current_file):
+                return current_file
+    return name #Hopefully is in the system path
+
 def main():
 
-    args = parser.parse_args()
     # root = args.root
     number_landmarks = int(args.number_landmarks)
     number_points = int(args.number_points)
