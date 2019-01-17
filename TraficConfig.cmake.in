@@ -15,8 +15,8 @@ include("${Trafic_CMAKE_DIR}/TraficTargets.cmake")
 endif()
 
 set(Trafic_PY_DIR 
-	@CONF_PY_DIR@/TraficLib
-	@CONF_PY_DIR@/TraficMulti
+	@CONF_PY_DIR@/Trafic/TraficLib
+	@CONF_PY_DIR@/Trafic/TraficMulti
 )
  
 # These are IMPORTED targets created by TraficTargets.cmake

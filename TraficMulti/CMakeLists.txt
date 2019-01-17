@@ -23,7 +23,7 @@ if(${LOCAL_PROJECT_NAME}_BUILD_SLICER_EXTENSION)
     )
 else()
   install(FILES TraficMulti_cli.py
-    DESTINATION ${INSTALL_LIBRARY_DESTINATION}/TraficMulti)
+    DESTINATION ${INSTALL_LIBRARY_DESTINATION}/Trafic/TraficMulti)
     
 endif()
 
