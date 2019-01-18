@@ -18,15 +18,15 @@ real_py_file = os.path.dirname(os.path.realpath(__file__))
 default_paths = []
 
 default_paths.append(real_py_file)
-default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../")))
+default_paths.append(os.path.normpath(os.path.join(real_py_file, "../../")))
 
 #From the source dir to the build dir
-default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../Trafic-build/Trafic-build/bin")))
-default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../niral_utilities-install/bin")))
-default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../Trafic-build/niral_utilities-install/bin")))
+default_paths.append(os.path.normpath(os.path.join(real_py_file, "../../Trafic-build/Trafic-build/bin")))
+default_paths.append(os.path.normpath(os.path.join(real_py_file, "../../niral_utilities-install/bin")))
+default_paths.append(os.path.normpath(os.path.join(real_py_file, "../../Trafic-build/niral_utilities-install/bin")))
 
 #For the install dir
-default_paths.append(os.path.normalize(os.path.join(real_py_file, "../../../../niral_utilities-install/bin")))
+default_paths.append(os.path.normpath(os.path.join(real_py_file, "../../../../niral_utilities-install/bin")))
 
 #For docker
 default_paths.append("/cli-modules")
