@@ -43,9 +43,7 @@ def runClassification(input_fiber,  output_dir, summary_dir, checkpoint_dir, def
             'use_torsion'  : True
         }
 
-        currentPath = os.path.dirname(os.path.abspath(__file__))
-
-        tmp_dir = os.path.join(currentPath, "tmp_dir_fiber")
+        tmp_dir = os.path.join(output_dir, "resampled_fiber")
         if not os.path.isdir(tmp_dir):
           os.makedirs(tmp_dir)
 
