@@ -46,9 +46,17 @@ parser.add_argument('--no_curvature', action='store_true', dest='no_curvature', 
 parser.add_argument('--no_torsion', action='store_true', dest='no_torsion', help='Should torsion be used (true if flag not specified). Note that the training needs to be done with the same parameters')
 parser.add_argument('--hints', type=str, nargs='+', help='Path hints to find the executables: fiberfeaturescreator, ', default=default_paths)
 
-args = parser.parse_args()
 
-POLYDATATRANSFORM = get_executable("polydatatransform", args.hints)
+def get_executable(name, hints=["."]):
+    for h in hints:
+        for root, dirs, files in os.walk(h):
+            current_file = os.path.join(root, name)
+            if name in files and os.path.isfile(current_file):
+                return current_file
+    return name #Hopefully is in the system path
+
+
+POLYDATATRANSFORM = get_executable("polydatatransform", default_paths)
 
 def parse_csv_input(filename):
     with open(filename, 'r') as csvfile:
@@ -64,7 +72,7 @@ def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks,
         print('No landmark file specified, exiting...')
         return
 
-    tmp_dir = os.path.join(currentPath, "tmp_dir_lm_class")
+    tmp_dir = os.path.join(os.path.dirname(output_fiber), "tmp_dir_lm_class")
     if not os.path.isdir(tmp_dir):
       os.makedirs(tmp_dir)
     new_lm_path = os.path.join(tmp_dir, "lm_class.fcsv")
@@ -87,15 +95,12 @@ def fiber_preprocessing(input_fiber, output_fiber, deformation_field, landmarks,
         torsionOn=parameters['use_torsion'],
         curvatureOn=parameters['use_curvature'])
 
-def get_executable(name, hints=["."]):
-    for h in hints:
-        for root, dirs, files in os.walk(h):
-            current_file = os.path.join(root, name)
-            if name in files and os.path.isfile(current_file):
-                return current_file
-    return name #Hopefully is in the system path
-
 def main():
+
+    args = parser.parse_args()
+
+    POLYDATATRANSFORM = get_executable("polydatatransform", args.hints)
+
     parameters = {
         'num_points'   : args.number_points,
         'num_landmarks': args.number_landmarks,

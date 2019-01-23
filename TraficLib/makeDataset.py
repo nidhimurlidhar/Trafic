@@ -42,10 +42,18 @@ parser.add_argument('--no_curvature', action='store_true', dest='no_curvature', 
 parser.add_argument('--no_torsion', action='store_true', dest='no_torsion', help='Don\'t compute torsion features')
 parser.add_argument('--hints', type=str, nargs='+', help='Path hints to find the executables: fiberfeaturescreator, ', default=default_paths)
 
-args = parser.parse_args()
 
-FIBERSAMPLING = get_executable("fibersampling", args.hints)
-FIBERFEATURESCREATOR = get_executable("fiberfeaturescreator", args.hints)
+def get_executable(name, hints=["."]):
+    for h in hints:
+        for root, dirs, files in os.walk(h):
+            current_file = os.path.join(root, name)
+            if name in files and os.path.isfile(current_file):
+                return current_file
+    return name #Hopefully is in the system path
+
+
+FIBERSAMPLING = get_executable("fibersampling", default_paths)
+FIBERFEATURESCREATOR = get_executable("fiberfeaturescreator", default_paths)
 
 
 def run_make_dataset(input_dir, output_dir, landmarks="", number_landmarks=5, number_points=50, landmarksOn=True, curvatureOn=True, torsionOn=True):
@@ -93,16 +101,9 @@ def make_fiber_feature(input_fiber, output_fiber, landmarks, number_points=50, n
         print("\nerr : " + str(err))
     return
 
-def get_executable(name, hints=["."]):
-    for h in hints:
-        for root, dirs, files in os.walk(h):
-            current_file = os.path.join(root, name)
-            if name in files and os.path.isfile(current_file):
-                return current_file
-    return name #Hopefully is in the system path
-
 def main():
 
+    args = parser.parse_args()
     # root = args.root
     number_landmarks = int(args.number_landmarks)
     number_points = int(args.number_points)
@@ -112,6 +113,9 @@ def main():
     landmarksOn = not args.no_landmarks 
     curvatureOn = not args.no_curvature
     torsionOn = not args.no_torsion
+
+    FIBERSAMPLING = get_executable("fibersampling", default_paths)
+    FIBERFEATURESCREATOR = get_executable("fiberfeaturescreator", default_paths)
 
     run_make_dataset(input_dir, output_dir, landmarks,  number_points=number_points, number_landmarks=number_landmarks, landmarksOn=landmarksOn, 
         curvatureOn=curvatureOn, torsionOn=torsionOn)
