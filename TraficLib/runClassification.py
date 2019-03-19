@@ -82,12 +82,31 @@ def run_classification(data_file, output_dir, checkpoint_dir, summary_dir, fiber
         # Build a Graph that computes the logits predictions from the
         # inference model.  We'll use a prior graph built by the training
 
-        # Non Conv Version
+   # Non Conv Version
 
         if not conv:
             fibers, labels = read_testing(fiber_file=data_file, num_landmarks=num_landmarks, num_points=num_points, landmarks=lmOn, curvature=curvOn, torsion=torsOn)
             fibers = fibers.reshape(len(fibers), num_points * num_features)
-            fibers = tf.convert_to_tensor(fibers, dtype=tf.float32)
+            
+            y_len = len(fibers)
+            y_split = y_len / 2
+            x_len = num_points * num_features
+            x_split = x_len / 2
+            
+            fibers_top_left = fibers[0:y_split, 0:x_split]
+            fibers_top_right = fibers[0:y_split, x_split:x_len]
+            fibers_bottom_left = fibers[y_split:y_len, 0:x_split]
+            fibers_bottom_right = fibers[y_split:y_len, x_split:x_len]
+            
+            tf.convert_to_tensor(fibers_top_left, dtype=tf.float32)
+            tf.convert_to_tensor(fibers_top_right, dype=tf.float32)
+            tf.convert_to_tensor(fibers_bottom_left, dtype=tf.float32)
+            tf.convert_to_tensor(fibers_bottom_right, dtype=tf.float32)
+            
+            top = tf.concat([fibers_top_left, fibers_top_right], 1)
+            bottom = tf.concat([fibers_bottom_left, fibers_bottom_right], 1)
+            fibers = tf.concat([top, bottom], 0)
+           # fibers = tf.convert_to_tensor(fibers, dtype=tf.float32)
             labels = tf.convert_to_tensor(labels, dtype=tf.string)           
 
             # with tf.variable_scope("model") as scope:
